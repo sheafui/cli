@@ -17,5 +17,12 @@
       "email": "charrafimohamed27@gmail.com"
     }
   ],
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Fluxtor\\Cli\\ServiceProvider"
+      ]
+    }
+  },
   "require": {}
 }
