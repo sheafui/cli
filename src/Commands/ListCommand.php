@@ -29,8 +29,20 @@ class ListCommand extends Command
         //todo: get list of all existing and published components from Fluxtor-dev
         $serverUrl = config('fluxtor-cli.server_url');
         
-        $list = Http::get($serverUrl . '/cli/list');
+        $response = Http::get($serverUrl . '/cli/list');
         $this->info("Listing available components: ");
-        $this->info($list);
+        
+        if($response->failed()) {
+            $this->warn("Sorry, we have issue to connect to the server.");
+            return;
+        }
+
+        $list = $response->json();
+
+        foreach ($list as $component) {
+            $this->warn($component['name'] . ':');
+            $this->info($component['description']);
+            $this->info('');
+        }
     }
 }
