@@ -8,16 +8,19 @@ use Illuminate\Support\ServiceProvider as SupportServiceProvider;
 class ServiceProvider extends SupportServiceProvider{
     public function boot()
     {
-        // Register commands only if running in console (Artisan)
         if ($this->app->runningInConsole()) {
             $this->commands([
-                ListCommand::class,  // List all your commands here
+                ListCommand::class,  
             ]);
         }
+
+        $this->publishes([
+            __DIR__ . '/../config/fluxtor-cli.php' => config_path('fluxtor-cli.php')
+        ], 'fluxtor-cli-config');
     }
 
     public function register()
     {
-        // You can bind services here if needed
+        // bind services if needed
     }
 }
