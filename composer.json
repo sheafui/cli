@@ -1,0 +1,21 @@
+{
+  "name": "fluxtor/cli",
+  "description": "A CLI tool for fluxtor-dev",
+  "type": "package",
+  "autoload": {
+    "psr-4": {
+      "Fluxtor\\Cli\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Youssef ACHCHIRAJ",
+      "email": "youssefachchiraj@gmail.com"
+    },
+    {
+      "name": "CHARRAFI mohamed",
+      "email": "charrafimohamed27@gmail.com"
+    }
+  ],
+  "require": {}
+}
