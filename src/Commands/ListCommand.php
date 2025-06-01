@@ -26,23 +26,33 @@ class ListCommand extends Command
      */
     public function handle()
     {
+        // curl GET https://127.0.0.1/cli/list
+        // curl GET https://127.0.0.1/cli/check
         //todo: get list of all existing and published components from Fluxtor-dev
-        $serverUrl = config('fluxtor-cli.server_url');
-        
-        $response = Http::get($serverUrl . '/cli/list');
-        $this->info("Listing available components: ");
-        
-        if($response->failed()) {
-            $this->warn("Sorry, we have issue to connect to the server.");
-            return;
-        }
+        $serverUrl = config('fluxtor.cli.server_url');
 
-        $list = $response->json();
+        $response = Http::get($serverUrl . '/api/components/fasda');
+        // $this->info('Listing available components: ');
 
-        foreach ($list as $component) {
-            $this->warn($component['name'] . ':');
-            $this->info($component['description']);
-            $this->info('');
-        }
+        // if ($response->failed()) {
+        //     $this->warn('Sorry, we have issue to connect to the server.');
+        //     return;
+        // }
+
+        // $list = $response->collect();
+
+        // // dd($list);
+
+        // $list->each(function ($component) {
+        //     $this->warn($component["name"] . ':');
+        //     $this->info($component["description"]);
+        //     $this->info('');
+        // });
+
+        // foreach ($list as $component) {
+        //     $this->warn($component->name . ':');
+        //     $this->info($component->description);
+        //     $this->info('');
+        // }
     }
 }
