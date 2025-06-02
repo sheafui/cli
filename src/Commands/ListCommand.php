@@ -26,33 +26,26 @@ class ListCommand extends Command
      */
     public function handle()
     {
-        // curl GET https://127.0.0.1/cli/list
-        // curl GET https://127.0.0.1/cli/check
-        //todo: get list of all existing and published components from Fluxtor-dev
-        $serverUrl = config('fluxtor.cli.server_url');
+        try {
+            $serverUrl = config('fluxtor.cli.server_url');
 
-        $response = Http::get($serverUrl . '/api/components/fasda');
-        // $this->info('Listing available components: ');
+            $response = Http::get($serverUrl . '/api/cli/lists');
 
-        // if ($response->failed()) {
-        //     $this->warn('Sorry, we have issue to connect to the server.');
-        //     return;
-        // }
+            if ($response->failed()) {
+                $this->error('Failed: ' . $response->reason());
+                return;
+            }
 
-        // $list = $response->collect();
+            $list = $response->collect();
 
-        // // dd($list);
-
-        // $list->each(function ($component) {
-        //     $this->warn($component["name"] . ':');
-        //     $this->info($component["description"]);
-        //     $this->info('');
-        // });
-
-        // foreach ($list as $component) {
-        //     $this->warn($component->name . ':');
-        //     $this->info($component->description);
-        //     $this->info('');
-        // }
+            $list->each(function ($component) {
+                $this->warn($component['name'] . ':');
+                $this->info($component['description']);
+                $this->info('');
+            });
+        } catch (\Throwable $th) {
+            $this->error('Something went wrong');
+            $this->warn('Error details: ' . $th->getMessage());
+        }
     }
 }
