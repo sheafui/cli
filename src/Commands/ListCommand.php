@@ -3,6 +3,7 @@
 namespace Fluxtor\Cli\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 
 class ListCommand extends Command
 {
@@ -25,7 +26,26 @@ class ListCommand extends Command
      */
     public function handle()
     {
-        //todo: get list of all existing and published components from Fluxtor-dev
-        $this->info("Listing available components");
+        try {
+            $serverUrl = config('fluxtor.cli.server_url');
+
+            $response = Http::get($serverUrl . '/api/cli/lists');
+
+            if ($response->failed()) {
+                $this->error('Failed: ' . $response->reason());
+                return;
+            }
+
+            $list = $response->collect();
+
+            $list->each(function ($component) {
+                $this->warn($component['name'] . ':');
+                $this->info($component['description']);
+                $this->info('');
+            });
+        } catch (\Throwable $th) {
+            $this->error('Something went wrong');
+            $this->warn('Error details: ' . $th->getMessage());
+        }
     }
 }
