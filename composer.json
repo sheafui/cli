@@ -7,6 +7,9 @@
       "Fluxtor\\Cli\\": "src/"
     }
   },
+  "require": {
+    "laravel/prompts": "^0.3.5"
+  },
   "authors": [
     {
       "name": "Youssef ACHCHIRAJ",
