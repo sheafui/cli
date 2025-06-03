@@ -2,12 +2,14 @@
 
 namespace Fluxtor\Cli\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\text;
 
 class AddComponentCommand extends Command
@@ -31,49 +33,26 @@ class AddComponentCommand extends Command
      */
     public function handle()
     {
-        $serverUrl = config('fluxtor.cli.server_url');
+        $componentName = $this->getComponentName();
 
-        $componentName = $this->argument('name');
+        try {
+            $componentResources = $this->fetchComponentResources($componentName);
+            
+            // dd($componentResources);
 
-        if (!$componentName) {
-            $componentName = text(
-                label: 'Type the component name',
-                placeholder: 'simple-search',
-                required: true,
-            );
-        }
+            $createdFiles = $this->addComponentFiles($componentResources);
 
-        
+            $component = Str::of($componentName)->replace('-', ' ')->title();
 
-        $result = Http::get($serverUrl . '/api/cli/components/' . $componentName);
+            $this->components->info($component . ' has been added.');
 
-        if ($result->failed()) {
-            $this->error('Failed: ' . $result->reason());
-            return;
-        }
-
-        $component = json_decode($result);
-        
-        collect($component->files)->each(function ($file) {
-            $filePath = $file->path;
-
-            if (!file_exists($filePath)) {
-                $this->createComponentFile($filePath, $file->content);
-                $this->info('File has been created at ' . $filePath);
-            } else {
-                $this->warn($filePath);
-                $shouldOverride = confirm(label: 'This File already exists, do you want to overide it?');
-
-                if (!$shouldOverride) {
-                    $this->info('File has been skipped');
-                    return;
-                }
-
-                $this->createComponentFile($filePath, $file->content);
-
-                $this->info('File has been overided');
+            foreach ($createdFiles as $file) {
+                $this->components->info($file['path'] . ' has been ' . $file['action']);
             }
-        });
+
+        } catch (\Throwable $th) {
+            $this->components->error($th->getMessage());
+        }
     }
 
     private function createComponentFile(string $filePath, string $fileContent)
@@ -86,5 +65,57 @@ class AddComponentCommand extends Command
             File::makeDirectory($directory, 0755, true, true);
             File::replace($filePath, $fileContent);
         }
+    }
+
+    private function getComponentName()
+    {
+        $componentName = $this->argument('name');
+
+        if (!$componentName) {
+            $componentName = text(label: 'Type the component name', placeholder: 'simple-search', required: true);
+        }
+
+        return $componentName;
+    }
+
+    private function fetchComponentResources(string $componentName)
+    {
+        $serverUrl = config('fluxtor.cli.server_url');
+
+        $result = Http::get($serverUrl . '/api/cli/components/' . $componentName);
+
+        if ($result->failed()) {
+            throw new Exception('Faield to add the component.');
+        }
+
+        return json_decode($result);
+        
+    }
+
+    private function addComponentFiles($componentResources)
+    {
+        $createdFiles = [];
+
+        collect($componentResources->files)->each(function ($file) use (&$createdFiles) {
+            $filePath = $file->path;
+
+            if (!file_exists($filePath)) {
+                $this->createComponentFile($filePath, $file->content);
+                $createdFiles[] = ['path' => $filePath, 'action' => 'created'];
+            } else {
+                $shouldOverride = confirm(label: $filePath . ' File already exists, do you want to overide it?');
+
+                if (!$shouldOverride) {
+                    $createdFiles[] = ['path' => $filePath, 'action' => 'skipped'];
+                    return;
+                }
+
+                $this->createComponentFile($filePath, $file->content);
+
+                $createdFiles[] = ['path' => $filePath, 'action' => 'overrided'];
+            }
+        });
+
+        return $createdFiles;
     }
 }
