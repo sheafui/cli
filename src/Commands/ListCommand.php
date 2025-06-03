@@ -29,23 +29,22 @@ class ListCommand extends Command
         try {
             $serverUrl = config('fluxtor.cli.server_url');
 
-            $response = Http::get($serverUrl . '/api/cli/lists');
+            $response = Http::get($serverUrl . '/api/cli/list');
 
             if ($response->failed()) {
-                $this->error('Failed: ' . $response->reason());
+                $this->components->error('Failed: ' . $response->reason());
                 return;
             }
 
             $list = $response->collect();
 
             $list->each(function ($component) {
-                $this->warn($component['name'] . ':');
-                $this->info($component['description']);
-                $this->info('');
+                $this->components->twoColumnDetail($component['name'] . ':', $component['description']);
+                
             });
         } catch (\Throwable $th) {
-            $this->error('Something went wrong');
-            $this->warn('Error details: ' . $th->getMessage());
+            $this->components->error('Something went wrong');
+            $this->components->error('Error details: ' . $th->getMessage());
         }
     }
 }
