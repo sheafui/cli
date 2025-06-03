@@ -29,7 +29,7 @@ class ListCommand extends Command
         try {
             $serverUrl = config('fluxtor.cli.server_url');
 
-            $response = Http::get($serverUrl . '/api/cli/lists');
+            $response = Http::get($serverUrl . '/api/cli/list');
 
             if ($response->failed()) {
                 $this->error('Failed: ' . $response->reason());
