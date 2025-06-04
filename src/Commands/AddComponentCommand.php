@@ -85,7 +85,7 @@ class AddComponentCommand extends Command
         $result = Http::get($serverUrl . '/api/cli/components/' . $componentName);
 
         if ($result->failed()) {
-            throw new Exception('Faield to add the component.');
+            throw new Exception('Failed to add the component.');
         }
 
         return json_decode($result);
