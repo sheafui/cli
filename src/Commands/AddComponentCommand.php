@@ -2,9 +2,7 @@
 
 namespace Fluxtor\Cli\Commands;
 
-use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -19,7 +17,7 @@ class AddComponentCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fluxtor:add {name?}';
+    protected $signature = 'fluxtor:add {name? : the name of the component.} {--force : override the component file if it exist.}';
 
     /**
      * The console command description.
@@ -37,10 +35,12 @@ class AddComponentCommand extends Command
 
         try {
             $componentResources = $this->fetchComponentResources($componentName);
-            
-            // dd($componentResources);
 
-            $createdFiles = $this->addComponentFiles($componentResources);
+            $dependencies = $componentResources->get('dependencies');
+
+            $this->handleDependencies($dependencies);
+
+            $createdFiles = $this->addComponentFiles($componentResources->get('files'));
 
             $component = Str::of($componentName)->replace('-', ' ')->title();
 
@@ -49,7 +49,6 @@ class AddComponentCommand extends Command
             foreach ($createdFiles as $file) {
                 $this->components->info($file['path'] . ' has been ' . $file['action']);
             }
-
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
         }
@@ -82,40 +81,57 @@ class AddComponentCommand extends Command
     {
         $serverUrl = config('fluxtor.cli.server_url');
 
-        $result = Http::get($serverUrl . '/api/cli/components/' . $componentName);
-
-        if ($result->failed()) {
-            throw new Exception('Failed to add the component.');
-        }
-
-        return json_decode($result);
-        
+        return Http::get($serverUrl . '/api/cli/components/' . $componentName)
+            ->onError(function ($res) {
+                $this->components->error('Failed to add the component. ' . $res->json());
+                exit(1);
+            })
+            ->collect();
     }
 
-    private function addComponentFiles($componentResources)
+    private function addComponentFiles($files)
     {
         $createdFiles = [];
+        $forceFileCreation = $this->option('force');
 
-        collect($componentResources->files)->each(function ($file) use (&$createdFiles) {
-            $filePath = $file->path;
+        foreach ($files as $file) {
+            $filePath = $file['path'];
+            $content = $file['content'];
 
             if (!file_exists($filePath)) {
-                $this->createComponentFile($filePath, $file->content);
+                $this->createComponentFile($filePath, $content);
                 $createdFiles[] = ['path' => $filePath, 'action' => 'created'];
-            } else {
-                $shouldOverride = confirm(label: $filePath . ' File already exists, do you want to overide it?');
-
-                if (!$shouldOverride) {
-                    $createdFiles[] = ['path' => $filePath, 'action' => 'skipped'];
-                    return;
-                }
-
-                $this->createComponentFile($filePath, $file->content);
-
-                $createdFiles[] = ['path' => $filePath, 'action' => 'overrided'];
+                continue;
             }
-        });
+
+            $shouldOverride = $forceFileCreation ? true : confirm($filePath . ' File already exists, do you want to override it?');
+
+            if (!$shouldOverride) {
+                $createdFiles[] = ['path' => $filePath, 'action' => 'skipped'];
+                continue;
+            }
+
+            $this->createComponentFile($filePath, $content);
+
+            $createdFiles[] = ['path' => $filePath, 'action' => 'overridden'];
+        }
 
         return $createdFiles;
+    }
+
+    private function handleDependencies($dependencies)
+    {
+        if (!$dependencies) {
+            return;
+        }
+
+        if ($depInternal = $dependencies['internal']) {
+            $this->components->warn('This component has a dependencies must be installed to work: ' . $depInternal);
+        }
+
+        // if($depExternal = $dependencies['external']) {
+        //     $this->components->warn("This component has an external dependencies must be installed to work.");
+        //     dump($depExternal);
+        // }
     }
 }
