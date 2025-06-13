@@ -1,0 +1,126 @@
+<?php
+
+namespace Fluxtor\Cli\Services;
+
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Str;
+
+use function Laravel\Prompts\confirm;
+
+class ComponentInstaller
+{
+    public function __construct(protected $components, protected $force) {}
+
+    public function addComponent(string $componentName)
+    {
+        try {
+            $componentResources = $this->fetchComponentResources($componentName);
+
+            $createdFiles = $this->addComponentFiles($componentResources->get('files'));
+
+            $component = Str::of($componentName)->replace('-', ' ')->title();
+
+            $this->components->info($component . ' has been added.');
+
+            foreach ($createdFiles as $file) {
+                $this->components->info($file['path'] . ' has been ' . $file['action']);
+            }
+
+            $dependencies = $componentResources->get('dependencies');
+
+            $this->handleDependencies($dependencies);
+        } catch (\Throwable $th) {
+            $this->components->error($th->getMessage());
+        }
+    }
+
+    private function createComponentFile(string $filePath, string $fileContent)
+    {
+        $directory = str($filePath)->beforeLast('/');
+        File::ensureDirectoryExists($directory);
+        File::replace($filePath, $fileContent);
+    }
+
+    private function fetchComponentResources(string $componentName)
+    {
+        $serverUrl = config('fluxtor.cli.server_url');
+
+        return Http::get($serverUrl . '/api/cli/components/' . $componentName)
+            ->onError(function ($res) use ($componentName) {
+                $component = Str::of($componentName)->replace('-', ' ')->title();
+                $this->components->error('Failed to add the component "' . $component . '" ' . $res->json());
+                exit(1);
+            })
+            ->collect();
+    }
+
+    private function addComponentFiles($files)
+    {
+        $createdFiles = [];
+        $forceFileCreation = $this->force;
+
+        foreach ($files as $file) {
+            $filePath = $file['path'];
+            $content = $file['content'];
+
+            if (!file_exists($filePath)) {
+                $this->createComponentFile($filePath, $content);
+                $createdFiles[] = ['path' => $filePath, 'action' => 'created'];
+                continue;
+            }
+
+            $shouldOverride = $forceFileCreation ? true : confirm($filePath . ' File already exists, do you want to override it?');
+
+            if (!$shouldOverride) {
+                $createdFiles[] = ['path' => $filePath, 'action' => 'skipped'];
+                continue;
+            }
+
+            $this->createComponentFile($filePath, $content);
+
+            $createdFiles[] = ['path' => $filePath, 'action' => 'overridden'];
+        }
+
+        return $createdFiles;
+    }
+
+    private function handleDependencies($dependencies)
+    {
+        if (!$dependencies) {
+            return;
+        }
+
+        // if ($depInternal = $dependencies['internal']) {
+        //     $depInternal = Arr::wrap($depInternal);
+
+        //     $installDependencies = confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
+
+        //     if ($installDependencies) {
+        //         $this->components->info('↳ Installing internal dependency');
+        //         foreach ($depInternal as $dep) {
+        //             $this->addComponent($dep);
+        //         }
+        //     }
+        // }
+
+        if ($depExternal = Arr::wrap($dependencies['external'])) {
+            // $depExternal = Arr::wrap($depExternal);
+
+
+            $this->components->warn('This component has an external dependencies must be installed to work.');
+            $confirmInstall = confirm(label: "This component need an external dependencies to work, do you want to install them?", default: true);
+
+            if(!$confirmInstall) {
+                return;
+            }
+
+            foreach ($depExternal as $key => $dep) {
+                $this->components->info("Install $key...");
+                Process::run($dep[1]);
+            }
+        }
+    }
+}
