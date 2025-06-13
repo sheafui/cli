@@ -3,6 +3,7 @@
 namespace Fluxtor\Cli\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -32,13 +33,13 @@ class AddComponentCommand extends Command
     public function handle()
     {
         $componentName = $this->getComponentName();
+        $this->addComponent($componentName);
+    }
 
+    private function addComponent(string $componentName)
+    {
         try {
             $componentResources = $this->fetchComponentResources($componentName);
-
-            $dependencies = $componentResources->get('dependencies');
-
-            $this->handleDependencies($dependencies);
 
             $createdFiles = $this->addComponentFiles($componentResources->get('files'));
 
@@ -49,6 +50,10 @@ class AddComponentCommand extends Command
             foreach ($createdFiles as $file) {
                 $this->components->info($file['path'] . ' has been ' . $file['action']);
             }
+
+            $dependencies = $componentResources->get('dependencies');
+
+            $this->handleDependencies($dependencies);
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
         }
@@ -57,13 +62,8 @@ class AddComponentCommand extends Command
     private function createComponentFile(string $filePath, string $fileContent)
     {
         $directory = str($filePath)->beforeLast('/');
-
-        if (File::ensureDirectoryExists($directory)) {
-            File::replace($filePath, $fileContent);
-        } else {
-            File::makeDirectory($directory, 0755, true, true);
-            File::replace($filePath, $fileContent);
-        }
+        File::ensureDirectoryExists($directory);
+        File::replace($filePath, $fileContent);
     }
 
     private function getComponentName()
@@ -82,8 +82,9 @@ class AddComponentCommand extends Command
         $serverUrl = config('fluxtor.cli.server_url');
 
         return Http::get($serverUrl . '/api/cli/components/' . $componentName)
-            ->onError(function ($res) {
-                $this->components->error('Failed to add the component. ' . $res->json());
+            ->onError(function ($res) use ($componentName) {
+                $component = Str::of($componentName)->replace('-', ' ')->title();
+                $this->components->error('Failed to add the component "' . $component . '" ' . $res->json());
                 exit(1);
             })
             ->collect();
@@ -126,7 +127,16 @@ class AddComponentCommand extends Command
         }
 
         if ($depInternal = $dependencies['internal']) {
-            $this->components->warn('This component has a dependencies must be installed to work: ' . $depInternal);
+            $depInternal = Arr::wrap($depInternal);
+
+            $installDependencies = confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
+
+            if ($installDependencies) {
+                $this->components->info("↳ Installing internal dependency: $depInternal");
+                foreach ($depInternal as $dep) {
+                    $this->addComponent($dep);
+                }
+            }
         }
 
         // if($depExternal = $dependencies['external']) {
