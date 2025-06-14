@@ -21,7 +21,7 @@ class ComponentInstaller
 
             $createdFiles = $this->addComponentFiles($componentResources->get('files'));
 
-            $component = Str::of($componentName)->replace('-', ' ')->title();
+            $component = Str::of($componentName)->headline();
 
             $this->installingReport($component, $createdFiles);
 
@@ -63,7 +63,7 @@ class ComponentInstaller
 
         return Http::withToken($token)->get($serverUrl . '/api/cli/components/' . $componentName)
             ->onError(function ($res) use ($componentName) {
-                $component = Str::of($componentName)->replace('-', ' ')->title();
+                $component = Str::of($componentName)->headline();
                 $responseJson = $res->json()['message'];
                 
                 $this->components->error("Failed to add the component '$component' $responseJson.");
