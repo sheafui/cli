@@ -28,6 +28,10 @@ class ComponentInstaller
             $this->handleDependencies($componentResources->get('dependencies'));
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
+
+            if(!app()->isProduction()){
+                $this->components->error($th->getTraceAsString());
+            }
         }
     }
 
@@ -60,7 +64,7 @@ class ComponentInstaller
         return Http::withToken($token)->get($serverUrl . '/api/cli/components/' . $componentName)
             ->onError(function ($res) use ($componentName) {
                 $component = Str::of($componentName)->replace('-', ' ')->title();
-                $responseJson = $res->json();
+                $responseJson = $res->json()['message'];
                 
                 $this->components->error("Failed to add the component '$component' $responseJson.");
                 exit(1);

@@ -3,6 +3,7 @@
 namespace Fluxtor\Cli\Services;
 
 use Illuminate\Support\Facades\File;
+use RuntimeException;
 
 class FluxtorConfig
 {
@@ -22,21 +23,26 @@ class FluxtorConfig
         File::replace("$configDirectory/config.json", serialize($data));
     }
 
-    private static function configDirectory() {
-        return rtrim(getenv('HOME') ?: $_SERVER['HOME'], '/') . '/.fluxtor';
+    private static function configDirectory()
+    {
+        $home = getenv('HOME') ?: $_SERVER['HOME'] ?? (getenv('USERPROFILE') ?? ($_SERVER['USERPROFILE'] ?? null));
+
+        if (!$home) {
+            throw new RuntimeException('Unable to determine user home directory.');
+        }
+        return rtrim($home, '/') . '/.fluxtor';
     }
 
-
-    public static function getUserToken() {
+    public static function getUserToken()
+    {
         try {
             $configDirectory = self::configDirectory();
 
-        $userData = File::get("$configDirectory/config.json");
+            $userData = File::get("$configDirectory/config.json");
 
-        return unserialize($userData)['user']['token'];
+            return unserialize($userData)['user']['token'];
         } catch (\Throwable $th) {
             return null;
         }
     }
-
 }

@@ -46,6 +46,6 @@ class LoginCommand extends Command
 
         FluxtorConfig::saveLoggedInUserCredentials($email, $token);
         
-        $this->components->info("Your Have logged in as $email with the password: $password");
+        $this->components->info("Your Have logged in as $email.");
     }
 }
