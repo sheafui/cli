@@ -50,7 +50,14 @@ class ComponentInstaller
     {
         $serverUrl = config('fluxtor.cli.server_url');
 
-        return Http::get($serverUrl . '/api/cli/components/' . $componentName)
+        $token = FluxtorConfig::getUserToken();
+
+        if(!$token) {
+            $this->components->error("You need to login, Please run 'php artisan fluxtor:login' and login with you fluxtor account.");
+            return;
+        }
+
+        return Http::withToken($token)->get($serverUrl . '/api/cli/components/' . $componentName)
             ->onError(function ($res) use ($componentName) {
                 $component = Str::of($componentName)->replace('-', ' ')->title();
                 $responseJson = $res->json();
