@@ -23,18 +23,20 @@ class ComponentInstaller
 
             $component = Str::of($componentName)->replace('-', ' ')->title();
 
-            $this->components->info($component . ' has been added.');
+            $this->installingReport($component, $createdFiles);
+
+            $this->handleDependencies($componentResources->get('dependencies'));
+        } catch (\Throwable $th) {
+            $this->components->error($th->getMessage());
+        }
+    }
+
+    private function installingReport(string $component, array $createdFiles) {
+        $this->components->info($component . ' has been added.');
 
             foreach ($createdFiles as $file) {
                 $this->components->info($file['path'] . ' has been ' . $file['action']);
             }
-
-            $dependencies = $componentResources->get('dependencies');
-
-            $this->handleDependencies($dependencies);
-        } catch (\Throwable $th) {
-            $this->components->error($th->getMessage());
-        }
     }
 
     private function createComponentFile(string $filePath, string $fileContent)
@@ -51,7 +53,9 @@ class ComponentInstaller
         return Http::get($serverUrl . '/api/cli/components/' . $componentName)
             ->onError(function ($res) use ($componentName) {
                 $component = Str::of($componentName)->replace('-', ' ')->title();
-                $this->components->error('Failed to add the component "' . $component . '" ' . $res->json());
+                $responseJson = $res->json();
+                
+                $this->components->error("Failed to add the component '$component' $responseJson.");
                 exit(1);
             })
             ->collect();
@@ -93,32 +97,30 @@ class ComponentInstaller
             return;
         }
 
-        // if ($depInternal = $dependencies['internal']) {
-        //     $depInternal = Arr::wrap($depInternal);
+        if ($depInternal = Arr::wrap($dependencies['internal'])) {
+            $installDependencies = confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
 
-        //     $installDependencies = confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
+            if (!$installDependencies) {
+                return;
+            }
 
-        //     if ($installDependencies) {
-        //         $this->components->info('↳ Installing internal dependency');
-        //         foreach ($depInternal as $dep) {
-        //             $this->addComponent($dep);
-        //         }
-        //     }
-        // }
+            $this->components->info('↳ Installing internal dependency');
+            foreach ($depInternal as $dep) {
+                $this->addComponent($dep);
+            }
+        }
 
         if ($depExternal = Arr::wrap($dependencies['external'])) {
-            // $depExternal = Arr::wrap($depExternal);
-
 
             $this->components->warn('This component has an external dependencies must be installed to work.');
-            $confirmInstall = confirm(label: "This component need an external dependencies to work, do you want to install them?", default: true);
+            $confirmInstall = confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
 
-            if(!$confirmInstall) {
+            if (!$confirmInstall) {
                 return;
             }
 
             foreach ($depExternal as $key => $dep) {
-                $this->components->info("Install $key...");
+                $this->components->info("↳ Installing $key...");
                 Process::run($dep[1]);
             }
         }
