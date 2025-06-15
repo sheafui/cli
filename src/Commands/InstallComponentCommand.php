@@ -7,21 +7,21 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\text;
 
-class AddComponentCommand extends Command
+class InstallComponentCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'fluxtor:add {name? : the name of the component.} {--force : override the component file if it exist.}';
+    protected $signature = 'fluxtor:install {name? : the name of the component.} {--force : override the component file if it exist.} {--internalDeps : installing required internal Dependencies.} {--externalDeps : installing required external Dependencies.}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Add a fluxtor Component';
+    protected $description = 'Installing a fluxtor Component';
 
     /**
      * Execute the console command.
@@ -31,9 +31,11 @@ class AddComponentCommand extends Command
 
         $componentName = $this->getComponentName();
         $force = $this->option("force");
+        $internalDeps = $this->option("internalDeps");
+        $externalDeps = $this->option("externalDeps");
 
-        $componentInstaller = new ComponentInstaller($this->components, $force);
-        $componentInstaller->addComponent($componentName);
+        $componentInstaller = new ComponentInstaller($this->components, $force, $internalDeps, $externalDeps);
+        $componentInstaller->install($componentName);
 
     }
 
