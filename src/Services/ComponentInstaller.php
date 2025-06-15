@@ -12,20 +12,20 @@ use function Laravel\Prompts\confirm;
 
 class ComponentInstaller
 {
-    public function __construct(protected $components, protected $force) {}
+    public function __construct(protected $components, protected $force, protected $internalDeps, protected $externalDeps) {}
 
-    public function addComponent(string $componentName)
+    public function install(string $componentName)
     {
         try {
-            $componentResources = $this->fetchComponentResources($componentName);
+            $componentResources = $this->fetchResources($componentName);
 
-            $createdFiles = $this->addComponentFiles($componentResources->get('files'));
+            $createdFiles = $this->installFiles($componentResources->get('files'));
 
             $component = Str::of($componentName)->headline();
 
-            $this->installingReport($component, $createdFiles);
+            $this->reportInstallation($component, $createdFiles);
 
-            $this->handleDependencies($componentResources->get('dependencies'));
+            $this->installDeps($componentResources->get('dependencies'));
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 
@@ -35,8 +35,8 @@ class ComponentInstaller
         }
     }
 
-    private function installingReport(string $component, array $createdFiles) {
-        $this->components->info($component . ' has been added.');
+    private function reportInstallation(string $component, array $createdFiles) {
+        $this->components->info($component . ' has been installed successfully.');
 
             foreach ($createdFiles as $file) {
                 $this->components->info($file['path'] . ' has been ' . $file['action']);
@@ -50,7 +50,7 @@ class ComponentInstaller
         File::replace($filePath, $fileContent);
     }
 
-    private function fetchComponentResources(string $componentName)
+    private function fetchResources(string $componentName)
     {
         $serverUrl = config('fluxtor.cli.server_url');
 
@@ -66,13 +66,13 @@ class ComponentInstaller
                 $component = Str::of($componentName)->headline();
                 $responseJson = $res->json()['message'];
                 
-                $this->components->error("Failed to add the component '$component' $responseJson.");
+                $this->components->error("Failed to install the component '$component'. $responseJson.");
                 exit(1);
             })
             ->collect();
     }
 
-    private function addComponentFiles($files)
+    private function installFiles($files)
     {
         $createdFiles = [];
         $forceFileCreation = $this->force;
@@ -102,36 +102,38 @@ class ComponentInstaller
         return $createdFiles;
     }
 
-    private function handleDependencies($dependencies)
+    private function installDeps($dependencies)
     {
         if (!$dependencies) {
             return;
         }
 
         if ($depInternal = Arr::wrap($dependencies['internal'])) {
-            $installDependencies = confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
+            $this->components->warn('This component has an external dependencies must be installed to work.');
+            $installDependencies = $this->internalDeps ? true : confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
 
             if (!$installDependencies) {
                 return;
             }
 
-            $this->components->info('↳ Installing internal dependency');
+            $this->components->info('↳ Installing internal dependencies');
             foreach ($depInternal as $dep) {
-                $this->addComponent($dep);
+                $this->install($dep);
             }
         }
 
         if ($depExternal = Arr::wrap($dependencies['external'])) {
 
             $this->components->warn('This component has an external dependencies must be installed to work.');
-            $confirmInstall = confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
+            $confirmInstall = $this->externalDeps ? true : confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
 
             if (!$confirmInstall) {
                 return;
             }
-
+            
+            $this->components->info('↳ Installing external dependencies');
             foreach ($depExternal as $key => $dep) {
-                $this->components->info("↳ Installing $key...");
+                $this->components->info("Installing $key...");
                 Process::run($dep[1]);
             }
         }
