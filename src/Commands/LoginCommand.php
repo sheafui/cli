@@ -38,7 +38,7 @@ class LoginCommand extends Command
         $result = Http::post("$serverUrl/api/cli/login", ['email'=>$email, 'password' => $password])->onError(function ($response) {
             if($response->failed()) {
                 $this->components->error($response->collect()->get('message'));
-                return;
+                exit;
             }
         })->collect();
 
