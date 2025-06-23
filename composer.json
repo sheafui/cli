@@ -7,17 +7,17 @@
       "Fluxtor\\Cli\\": "src/"
     }
   },
-  "require": {
-    "laravel/prompts": "^0.3.5"
+  "autoload-dev": {
+    "psr-4": {
+      "Fluxtor\\Cli\\Tests\\": "tests/"
+    }
   },
   "authors": [
     {
       "name": "Youssef ACHCHIRAJ",
-      "email": "youssefachchiraj@gmail.com"
-    },
-    {
-      "name": "CHARRAFI mohamed",
-      "email": "charrafimohamed27@gmail.com"
+      "email": "achchiraj.youssef@gmail.com",
+      "homepage": "https://youssef-achchiraj.com",
+      "role": "Full Stack Developer"
     }
   ],
   "extra": {
@@ -27,5 +27,16 @@
       ]
     }
   },
-  "require": {}
+  "require-dev": {
+    "orchestra/testbench": "^10.4",
+    "pestphp/pest": "^3.8"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "scripts": {
+    "test": "@php vendor/bin/pest"
+  }
 }
