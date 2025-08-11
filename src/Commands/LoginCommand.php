@@ -31,21 +31,23 @@ class LoginCommand extends Command
     public function handle()
     {
         $email = text(label: "Email: ", placeholder: 'someone@fluxtor.dev', required: true);
-        $password = password(label: "password: ", placeholder: '*********', required: true);
+        $password = password(label: "Password: ", placeholder: '*********', required: true);
 
         $serverUrl = config('fluxtor.cli.server_url');
 
-        $result = Http::post("$serverUrl/api/cli/login", ['email'=>$email, 'password' => $password])->onError(function ($response) {
-            if($response->failed()) {
-                $this->components->error($response->collect()->get('message'));
-                exit;
-            }
-        })->collect();
+        $response = Http::post("$serverUrl/api/cli/login", ['email' => $email, 'password' => $password]);
 
+        if ($response->failed()) {
+            $this->components->error($response->collect()->get('message'));
+            return self::FAILURE;
+        }
+
+        $result = $response->collect();
+        
         $token = $result->get('token');
 
         FluxtorConfig::saveLoggedInUserCredentials($email, $token);
-        
-        $this->components->info("Your Have logged in as $email.");
+
+        $this->components->info("You have logged in as $email.");
     }
 }
