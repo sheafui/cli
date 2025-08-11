@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -14,12 +11,10 @@ declare(strict_types=1);
 |
 */
 
-use Fluxtor\Cli\Tests\TestCase;
-// 
+pest()->extend(\Fluxtor\Cli\Tests\TestCase::class)
+    ->in('Unit')
+    ->in('Feature');
 
-pest()->extend(TestCase::class)
-    ->in('Feature')
-    ->in('Unit');
 /*
 |--------------------------------------------------------------------------
 | Expectations
