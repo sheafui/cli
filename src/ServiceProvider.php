@@ -2,6 +2,7 @@
 
 namespace Fluxtor\Cli;
 
+use Fluxtor\Cli\Commands\InitCommand;
 use Fluxtor\Cli\Commands\InstallComponentCommand;
 use Fluxtor\Cli\Commands\ListCommand;
 use Fluxtor\Cli\Commands\LoginCommand;
@@ -13,6 +14,7 @@ class ServiceProvider extends SupportServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([ListCommand::class]);
+            $this->commands([InitCommand::class]);
             $this->commands([InstallComponentCommand::class]);
             $this->commands([LoginCommand::class]);
         }
