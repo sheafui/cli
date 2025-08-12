@@ -2,10 +2,8 @@
 
 namespace Fluxtor\Cli\Commands;
 
-use Fluxtor\Cli\Services\InitService;
-use Illuminate\Support\Facades\Process;
+use Fluxtor\Cli\Services\PackageInitializationService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\text;
@@ -22,6 +20,7 @@ class FluxtorInitCommand extends Command
                             {--with-phosphor : Install and configure Phosphor Icons package}
                             {--css-file=app.css : Target CSS file name for package assets injection (relative to resources/css/)}
                             {--theme-file=theme.css : Name for the generated theme CSS file (without extension)}
+                            {--js-dir=fluxtor : Directory path for JavaScript files (relative to resources/js/)}
                             {--skip-prompts : Skip interactive prompts and use default configuration}
                             {--force : Force overwrite existing files and configurations}';
 
@@ -41,49 +40,27 @@ class FluxtorInitCommand extends Command
 
         $configuration = $this->gatherConfiguration();
 
-        $installPhosphorIcons = $this->option('phosphoricons');
-
-        if (!$installPhosphorIcons) {
-            $installPhosphorIcons = text(
-                label: "Do You want to install `phosphoricons`?",
-                placeholder: 'Y/N',
-                required: false,
-                transform: fn($input) => strtolower($input) === 'y'
-            );
-        }
-
-        $cssFileName = text(
-            label: "what the file name?: ",
-            placeholder: "theme",
-            required: true,
-            default: 'main'
+        $packageService = new PackageInitializationService(
+            command: $this,
+            enablePhosphorIcons: $configuration['phosphor_icons'],
+            enableDarkMode: $configuration['dark_mode'],
+            targetCssFile: $configuration['css_file'],
+            themeFileName: $configuration['theme_file'],
+            jsDirectory: $configuration['js_directory'],
+            forceOverwrite: $this->option('force')
         );
 
-        $darkMode = $this->option('dark');
+        $this->info('Initializing Fluxtor package...');
 
-        if (!$darkMode) {
-            $darkMode = text(
-                label: "Do you use dark Mode",
-                placeholder: "Y/N",
-                required: false,
-                default: "N",
-                transform: fn($input) => strtolower($input) === 'y'
-            );
+        $result = $packageService->initializePackage();
+
+        if ($result) {
+            $this->displaySuccess($configuration);
+            return Command::SUCCESS;
         }
 
-        if (!$darkMode) {
-            $darkMode = text(
-                label: "Do you want to initialize dark mode?",
-                placeholder: "Y/N",
-                required: false,
-                default: "N",
-                transform: fn($input) => strtolower($input) === 'y'
-            );
-        }
-
-        $initService = new InitService($installPhosphorIcons, $darkMode, $cssFileName);
-
-        $initService->init();
+        $this->error('Fluxtor package initialization failed. Please check the logs for details.');
+        return Command::FAILURE;
     }
 
     /**
@@ -100,6 +77,7 @@ class FluxtorInitCommand extends Command
             'dark_mode' => $this->determineDarkModeSetup(),
             'css_file' => $this->determineCssFileName(),
             'theme_file' => $this->determineThemeFileName(),
+            'js_directory' => $this->determineJsDirectory(),
         ];
     }
 
@@ -113,6 +91,7 @@ class FluxtorInitCommand extends Command
             'dark_mode' => $this->option('with-dark-mode'),
             'css_file' => $this->option('css-file'),
             'theme_file' => $this->option('theme-file'),
+            'js_directory' => $this->option('js-dir'),
         ];
     }
 
@@ -154,7 +133,7 @@ class FluxtorInitCommand extends Command
     protected function determineCssFileName(): string
     {
         $defaultFile = $this->option('css-file');
-        
+
         return text(
             label: 'Target CSS file for package assets integration',
             placeholder: $defaultFile,
@@ -170,13 +149,13 @@ class FluxtorInitCommand extends Command
     protected function determineThemeFileName(): string
     {
         $defaultName = $this->option('theme-file');
-        
+
         return text(
             label: 'Theme CSS file name (without extension)',
             placeholder: $defaultName,
             default: $defaultName,
             hint: 'Generated Fluxtor theme file will be saved as {name}.css',
-            validate: fn($input) => $this->validateFileName($input)
+            validate: fn($input) => $this->validateCssFileName($input)
         );
     }
 
@@ -201,25 +180,41 @@ class FluxtorInitCommand extends Command
     }
 
     /**
-     * Validate theme file name input
+     * Determine the JavaScript directory path
      */
-    protected function validateFileName(?string $input): ?string
+    protected function determineJsDirectory(): string
+    {
+        $defaultDir = $this->option('js-dir');
+
+        return text(
+            label: 'JavaScript files directory path',
+            placeholder: $defaultDir,
+            default: $defaultDir,
+            hint: 'Directory path relative to resources/js/ for Fluxtor JavaScript utilities',
+            validate: fn($input) => $this->validateJsDirectory($input)
+        );
+    }
+
+    /**
+     * Validate JavaScript directory input
+     */
+    protected function validateJsDirectory(?string $input): ?string
     {
         if (empty($input)) {
-            return 'Theme file name cannot be empty';
+            return 'JavaScript directory path cannot be empty';
         }
 
-        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $input)) {
-            return 'File name can only contain letters, numbers, hyphens, and underscores';
+        if (!preg_match('/^[a-zA-Z0-9_\/-]+$/', $input)) {
+            return 'Directory path can only contain letters, numbers, hyphens, underscores, and forward slashes';
         }
 
-        if (in_array(strtolower($input), ['index', 'main', 'bootstrap', 'tailwind'])) {
-            return 'Please choose a different name to avoid conflicts with common CSS frameworks';
+        // Prevent absolute paths
+        if (str_starts_with($input, '/') || str_contains($input, '..')) {
+            return 'Please use a relative directory path without leading slash or parent directory references';
         }
 
         return null;
     }
-
 
     /**
      * Display the Fluxtor package banner
@@ -235,6 +230,38 @@ class FluxtorInitCommand extends Command
         $this->line('  <fg=blue>╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝</>');
         $this->newLine();
         $this->line('  <fg=gray>Laravel UI Package Initialization & Setup</fg=gray>');
+        $this->newLine();
+    }
+
+
+    /**
+     * Display success message with package configuration summary
+     */
+    protected function displaySuccess(array $configuration): void
+    {
+        $this->newLine();
+        $this->info('🎉 Fluxtor package initialized successfully!');
+        $this->newLine();
+
+        $this->line('<fg=green>Package Configuration:</fg=green>');
+        $this->line("  • Main CSS file: <fg=yellow>{$configuration['css_file']}</fg=yellow>");
+        $this->line("  • Theme file: <fg=yellow>{$configuration['theme_file']}.css</fg=yellow>");
+        $this->line('  • Dark mode support: ' . ($configuration['dark_mode'] ? '<fg=green>✓ Enabled</fg=green>' : '<fg=red>✗ Disabled</fg=red>'));
+        $this->line('  • Phosphor Icons: ' . ($configuration['phosphor_icons'] ? '<fg=green>✓ Installed</fg=green>' : '<fg=red>✗ Skipped</fg=red>'));
+
+        $this->newLine();
+        $this->line('<fg=green>Package Components Installed:</fg=green>');
+        $this->line('  • CSS theme variables and custom properties');
+        $this->line('  • Utility classes and component styles');
+        $this->line('  • Laravel Blade components integration');
+        $this->line('  • Asset compilation configuration');
+
+        $this->newLine();
+        $this->line('<fg=gray>Next steps:</fg=gray>');
+        $this->line('  • Run "npm run dev" to compile the new assets');
+        $this->line('  • Include Fluxtor CSS in your Blade layout files');
+        $this->line('  • Start using Fluxtor components and utilities');
+        $this->line('  • Check documentation at: fluxtor.dev/docs');
         $this->newLine();
     }
 }
