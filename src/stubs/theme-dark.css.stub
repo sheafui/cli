@@ -1,0 +1,7 @@
+@layer theme {
+    .dark {
+        --color-primary: var(--color-white);
+        --color-primary-content: var(--color-white);
+        --color-primary-fg:  var(--color-neutral-800);
+    }
+}

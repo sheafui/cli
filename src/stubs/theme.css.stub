@@ -1,0 +1,15 @@
+/* By Fluxtor.dev */
+@theme inline {
+    /* base color variables */
+
+    /* --color-neutral-900: var(--color-neutral-950); */
+
+    /* primary color varibles */
+    --color-primary: var(--color-neutral-800);
+    --color-primary-content: var(--color-neutral-800);
+    --color-primary-fg: var(--color-white);
+
+    /* radius variables */
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
+}
