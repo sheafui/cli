@@ -15,7 +15,7 @@ class PackageInitializationService
         protected $enableDarkMode = false,
         protected $themeFileName,
         protected $targetCssFile,
-        protected $jsDirectory,
+        protected string|null $jsDirectory,
         protected $forceOverwrite
     ) {}
 
@@ -52,37 +52,43 @@ class PackageInitializationService
 
     public function initializePackage()
     {
-        $this->command->info("Installing `wireui/heroicons`...");
-        Process::run('composer require wireui/heroicons');
-        $this->command->info("`wireui/heroicons` installed.");
+        try {
+            $this->command->info("Installing `wireui/heroicons`...");
+            Process::run('composer require wireui/heroicons');
+            $this->command->info("`wireui/heroicons` installed.");
 
-        if ($this->enablePhosphorIcons) {
-            $this->command->info("Installing `wireui/phosphoricons`...");
-            Process::run('composer require wireui/phosphoricons');
-            $this->command->info("`wireui/phosphoricons` installed.");
-        }
+            if ($this->enablePhosphorIcons) {
+                $this->command->info("Installing `wireui/phosphoricons`...");
+                Process::run('composer require wireui/phosphoricons');
+                $this->command->info("`wireui/phosphoricons` installed.");
+            }
 
-        $this->command->info("*****************************************");
-        $this->command->info("*** Adding the required css variables ***");
-        $this->command->info("*****************************************");
+            $this->command->info("*****************************************");
+            $this->command->info("*** Adding the required css variables ***");
+            $this->command->info("*****************************************");
 
-        $this->createSeparateThemeFile();
+            $this->createCssThemeFile();
 
-        if ($this->enableDarkMode) {
-            $this->command->info("**********************************");
-            $this->command->info("*** Adding the dark Mode files ***");
-            $this->command->info("**********************************");
-            
-            $javascriptAssetService = new JavaScriptAssetService($this->command, $this->jsDirectory);
+            if ($this->enableDarkMode) {
+                $this->command->info("**********************************");
+                $this->command->info("*** Adding the dark Mode files ***");
+                $this->command->info("**********************************");
 
-            $javascriptAssetService->createDarkModeAssets();
+                $javascriptAssetService = new JavaScriptAssetService($this->command, $this->jsDirectory);
+
+                $javascriptAssetService->createDarkModeAssets();
+            }
+
+            return true;
+        } catch (\Throwable $th) {
+            return false;
         }
     }
 
     /**
-     * Create a separate theme.css file and import it
+     * Create a theme.css file and import it
      */
-    protected function createSeparateThemeFile()
+    protected function createCssThemeFile()
     {
         $themeFile = resource_path("css/{$this->themeFileName}");
         $appCssFile = resource_path('css/' . $this->targetCssFile);
@@ -117,15 +123,14 @@ class PackageInitializationService
 
         // Check if import already exists
         if (
-            strpos($appCssContent, "@import 'theme.css'") !== false ||
-            strpos($appCssContent, '@import "theme.css"') !== false
+            strpos($appCssContent, "@import './theme.css'") !== false
         ) {
             $this->command->info('Import statement already exists in main CSS file.');
             return;
         }
 
         // Add import at the beginning
-        $importStatement = "@import 'theme.css'; /* By Fluxtor.dev */ \n\n";
+        $importStatement = "@import './theme.css'; /* By Fluxtor.dev */ \n\n";
         $newContent = $importStatement . $appCssContent;
 
         File::put($targetCssFile, $newContent);

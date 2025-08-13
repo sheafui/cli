@@ -19,7 +19,7 @@ class FluxtorInitCommand extends Command
                             {--with-dark-mode : Include dark mode theme variables and utilities} 
                             {--with-phosphor : Install and configure Phosphor Icons package}
                             {--css-file=app.css : Target CSS file name for package assets injection (relative to resources/css/)}
-                            {--theme-file=theme.css : Name for the generated theme CSS file (without extension)}
+                            {--theme-file=theme.css : Name for the generated theme CSS file (relative to resources/css/)}
                             {--js-dir=fluxtor : Directory path for JavaScript files (relative to resources/js/)}
                             {--skip-prompts : Skip interactive prompts and use default configuration}
                             {--force : Force overwrite existing files and configurations}';
@@ -46,7 +46,7 @@ class FluxtorInitCommand extends Command
             enableDarkMode: $configuration['dark_mode'],
             targetCssFile: $configuration['css_file'],
             themeFileName: $configuration['theme_file'],
-            jsDirectory: $configuration['js_directory'],
+            jsDirectory: $configuration['js-dir'] ?? null,
             forceOverwrite: $this->option('force')
         );
 
@@ -72,13 +72,18 @@ class FluxtorInitCommand extends Command
             return $this->getDefaultConfiguration();
         }
 
-        return [
+        $config = [
             'phosphor_icons' => $this->determinePhosphorIconsInstallation(),
             'dark_mode' => $this->determineDarkModeSetup(),
             'css_file' => $this->determineCssFileName(),
             'theme_file' => $this->determineThemeFileName(),
-            'js_directory' => $this->determineJsDirectory(),
         ];
+
+        if ($config['dark_mode']) {
+            $config['js-dir'] = $this->determineJsDirectory();
+        }
+
+        return $config;
     }
 
     /**
@@ -91,7 +96,7 @@ class FluxtorInitCommand extends Command
             'dark_mode' => $this->option('with-dark-mode'),
             'css_file' => $this->option('css-file'),
             'theme_file' => $this->option('theme-file'),
-            'js_directory' => $this->option('js-dir'),
+            'js-dir' => $this->option('js-dir'),
         ];
     }
 
@@ -245,7 +250,11 @@ class FluxtorInitCommand extends Command
 
         $this->line('<fg=green>Package Configuration:</fg=green>');
         $this->line("  • Main CSS file: <fg=yellow>{$configuration['css_file']}</fg=yellow>");
-        $this->line("  • Theme file: <fg=yellow>{$configuration['theme_file']}.css</fg=yellow>");
+        $this->line("  • Theme file: <fg=yellow>{$configuration['theme_file']}</fg=yellow>");
+        if ($configuration['dark_mode']) {
+            $this->line("  • JS Directory: <fg=yellow>{$configuration['js-dir']}</fg=yellow>");
+            $this->line("  • JS files: <fg=yellow>utils.js and globals/theme.js</fg=yellow>");
+        }
         $this->line('  • Dark mode support: ' . ($configuration['dark_mode'] ? '<fg=green>✓ Enabled</fg=green>' : '<fg=red>✗ Disabled</fg=red>'));
         $this->line('  • Phosphor Icons: ' . ($configuration['phosphor_icons'] ? '<fg=green>✓ Installed</fg=green>' : '<fg=red>✗ Skipped</fg=red>'));
 
@@ -255,13 +264,5 @@ class FluxtorInitCommand extends Command
         $this->line('  • Utility classes and component styles');
         $this->line('  • Laravel Blade components integration');
         $this->line('  • Asset compilation configuration');
-
-        $this->newLine();
-        $this->line('<fg=gray>Next steps:</fg=gray>');
-        $this->line('  • Run "npm run dev" to compile the new assets');
-        $this->line('  • Include Fluxtor CSS in your Blade layout files');
-        $this->line('  • Start using Fluxtor components and utilities');
-        $this->line('  • Check documentation at: fluxtor.dev/docs');
-        $this->newLine();
     }
 }

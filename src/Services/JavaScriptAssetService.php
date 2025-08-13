@@ -326,7 +326,8 @@ class JavaScriptAssetService
     protected function addImportToAppJsFile(): void
     {
         $appJsFile = 'app.js';
-        if (!File::exists(resource_path('js/app.js'))) {
+        $appJsFilePath = resource_path("js/$appJsFile");
+        if (!File::exists($appJsFilePath)) {
             $appJsFile = text(
                 label: "Target Js File for dark mode integration.",
                 placeholder: 'app.js',
@@ -334,22 +335,22 @@ class JavaScriptAssetService
             );
         }
 
-        $appJsContent = File::get(resource_path("js/$appJsFile"));
+        $appJsContent = File::get($appJsFilePath);
+        $newContent = $appJsContent;
 
         // Check if import already exists
-        if (
-            strpos($appJsContent, "@import '$appJsFile'") !== false ||
-            strpos($appJsContent, "@import '$appJsFile'") !== false
-        ) {
-            $this->command->info('Import statement already exists in main CSS file.');
-            return;
+        if (strpos($appJsContent, "import './{$this->jsDirectory}/globals/theme.js'") === false) {
+            $importStatement = "import './{$this->jsDirectory}/globals/theme.js'; /* By Fluxtor.dev */ \n\n";
+            $newContent = $importStatement . $newContent;
         }
 
-        // Add import at the beginning
-        $importStatement = "@import '$appJsFile'; /* By Fluxtor.dev */ \n\n";
-        $newContent = $importStatement . $appJsContent;
+        if (strpos($appJsContent, "import './{$this->jsDirectory}/utils.js'") === false) {
+            $importStatement = "import './{$this->jsDirectory}/utils.js'; /* By Fluxtor.dev */ \n\n";
+            $newContent = $importStatement . $newContent;
+        }
 
-        File::put(resource_path("js/$appJsFile"), $newContent);
+        File::put($appJsFilePath, $newContent);
+
         $this->command->info("Added import statement to: {$appJsFile}");
     }
 
