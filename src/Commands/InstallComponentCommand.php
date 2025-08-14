@@ -3,6 +3,7 @@
 namespace Fluxtor\Cli\Commands;
 
 use Fluxtor\Cli\Services\ComponentInstaller;
+use Fluxtor\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\text;
@@ -38,9 +39,10 @@ class InstallComponentCommand extends Command
         $force = $this->option("force");
         $internalDeps = $this->option("internal-deps");
         $externalDeps = $this->option("external-deps");
-        $dryRun = $this->option("dry-run");
+        $isDryRun = $this->option("dry-run");
+        $installationConfig = new InstallationConfig($force, $internalDeps, $externalDeps, $isDryRun);
 
-        $componentInstaller = new ComponentInstaller($this, $this->components, $force, $internalDeps, $externalDeps, $dryRun);
+        $componentInstaller = new ComponentInstaller($this, $this->components, $installationConfig);
         $componentInstaller->install($componentName);
     }
 

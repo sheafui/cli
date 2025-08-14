@@ -2,8 +2,10 @@
 
 namespace Fluxtor\Cli\Services;
 
+use Fluxtor\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
@@ -13,32 +15,32 @@ use function Laravel\Prompts\confirm;
 
 class ComponentInstaller
 {
+    protected ComponentHttpClient $componentHttpClient;
+
     public function __construct(
         protected Command $command,
         protected $components,
-        protected $force,
-        protected $internalDeps,
-        protected $externalDeps,
-        protected $dryRun = false
-    ) {}
+        protected InstallationConfig $installationConfig
+    ) {
+        $this->componentHttpClient = new ComponentHttpClient();
+    }
 
     public function install(string $componentName)
     {
         try {
-            $componentResources = $this->fetchResources($componentName);
+            $componentResources = $this->componentHttpClient->fetchResources($componentName);
 
-            if ($this->dryRun) {
-                $this->dryRun($componentResources['files'], $componentResources['dependencies']);
-                return Command::SUCCESS;
+            if(!$componentResources['success']) {
+                $this->components->error($componentResources->message);
+                return Command::FAILURE;
             }
 
-            $createdFiles = $this->installFiles($componentResources->get('files'));
+            if ($this->installationConfig->isDryRun()) {
+                return $this->performDryRun($componentResources['files'], $componentResources['dependencies']);
+            }
 
-            $component = Str::of($componentName)->headline();
-
-            $this->reportInstallation($component, $createdFiles);
-
-            $this->installDeps($componentResources->get('dependencies'));
+            dd($componentResources);
+            return $this->performInstallation($componentName, $componentResources);
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 
@@ -48,7 +50,20 @@ class ComponentInstaller
         }
     }
 
-    public function dryRun(array $files, array $dependencies)
+    public function performInstallation(string $componentName, Collection $componentResources)
+    {
+        $createdFiles = $this->installFiles($componentResources->get('files'));
+
+        $component = Str::of($componentName)->headline();
+
+        $this->reportInstallation($component, $createdFiles);
+
+        $this->installDeps($componentResources->get('dependencies'));
+
+
+    }
+
+    public function performDryRun(array $files, array $dependencies)
     {
 
         foreach ($files as $file) {
@@ -66,6 +81,8 @@ class ComponentInstaller
                 $this->install($dep);
             }
         }
+
+        return Command::SUCCESS;
     }
 
     private function reportInstallation(string $component, array $createdFiles)
@@ -84,32 +101,11 @@ class ComponentInstaller
         File::replace($filePath, $fileContent);
     }
 
-    private function fetchResources(string $componentName)
-    {
-        $serverUrl = config('fluxtor.cli.server_url');
-
-        $token = FluxtorConfig::getUserToken();
-
-        if (!$token) {
-            $this->components->error("You need to login, Please run 'php artisan fluxtor:login' and login with you fluxtor account.");
-            return;
-        }
-
-        return Http::withToken($token)->get($serverUrl . '/api/cli/components/' . $componentName)
-            ->onError(function ($res) use ($componentName) {
-                $component = Str::of($componentName)->headline();
-                $responseJson = $res->json()['message'];
-
-                $this->components->error("Failed to install the component '$component'. $responseJson.");
-                exit(1);
-            })
-            ->collect();
-    }
 
     private function installFiles($files)
     {
         $createdFiles = [];
-        $forceFileCreation = $this->force;
+        $forceFileCreation = $this->installationConfig->shouldForceOverwriting();
 
         foreach ($files as $file) {
             $filePath = $file['path'];
@@ -144,7 +140,7 @@ class ComponentInstaller
 
         if (array_key_exists('internal', $dependencies) && $depInternal = Arr::wrap($dependencies['internal'])) {
             $this->components->warn('This component has an external dependencies must be installed to work.');
-            $installDependencies = $this->internalDeps ? true : confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
+            $installDependencies = $this->installationConfig->shouldInstallInternalDeps() ? true : confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
 
             if (!$installDependencies) {
                 return;
@@ -159,7 +155,7 @@ class ComponentInstaller
         if (array_key_exists('external', $dependencies) && $depExternal = Arr::wrap($dependencies['external'])) {
 
             $this->components->warn('This component has an external dependencies must be installed to work.');
-            $confirmInstall = $this->externalDeps ? true : confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
+            $confirmInstall = $this->installationConfig->shouldInstallExternalDeps() ? true : confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
 
             if (!$confirmInstall) {
                 return;
