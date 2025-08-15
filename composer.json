@@ -10,7 +10,7 @@
   ],
   "homepage": "https://github.com/fluxtorphp/cli",
   "license": "MIT",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "autoload": {
     "psr-4": {
       "Fluxtor\\Cli\\": "src/"

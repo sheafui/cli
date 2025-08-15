@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class ComponentHttpClient
 {
     protected string $url;
-    protected string $token;
+    protected string|null $token;
 
     public function __construct()
     {
@@ -17,7 +17,6 @@ class ComponentHttpClient
     }
     public function fetchResources(string $componentName)
     {
-
         $isComponentFree = $this->isComponentFree($componentName);
 
         if (!$isComponentFree['success']) {
@@ -27,7 +26,7 @@ class ComponentHttpClient
             ];
         }
 
-        if (!$this->token && !$isComponentFree['isFree']) {
+        if (!$isComponentFree['isFree'] && !$this->token) {
             return [
                 'message' => "You need to login, Please run 'php artisan fluxtor:login' and login with your fluxtor account.",
                 'success' => false
@@ -40,10 +39,10 @@ class ComponentHttpClient
 
         if ($response->failed()) {
             $component = Str::of($componentName)->headline();
-            $responseJson = $response->json()['message'];
+            $responseJson = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
 
             return [
-                'message' => "Failed to install the component '$component'. \n $responseJson.",
+                'message' => "Failed to install the component '$component'. \n $responseJson",
                 'success' => false
             ];
         }
