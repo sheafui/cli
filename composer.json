@@ -1,7 +1,16 @@
 {
   "name": "fluxtor/cli",
   "description": "A CLI tool for fluxtor-dev",
-  "type": "package",
+  "type": "library",
+  "keywords": [
+    "laravel",
+    "cli",
+    "fluxtor",
+    "package"
+  ],
+  "homepage": "https://github.com/fluxtorphp/cli",
+  "license": "MIT",
+  "version": "1.0.0",
   "autoload": {
     "psr-4": {
       "Fluxtor\\Cli\\": "src/"

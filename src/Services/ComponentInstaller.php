@@ -31,7 +31,7 @@ class ComponentInstaller
             $componentResources = $this->componentHttpClient->fetchResources($componentName);
 
             if(!$componentResources['success']) {
-                $this->components->error($componentResources->message);
+                $this->components->error($componentResources['message']);
                 return Command::FAILURE;
             }
 
@@ -39,8 +39,7 @@ class ComponentInstaller
                 return $this->performDryRun($componentResources['files'], $componentResources['dependencies']);
             }
 
-            dd($componentResources);
-            return $this->performInstallation($componentName, $componentResources);
+            return $this->performInstallation($componentName, $componentResources['data']);
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 

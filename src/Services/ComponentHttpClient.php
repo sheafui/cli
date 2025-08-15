@@ -21,7 +21,10 @@ class ComponentHttpClient
         $isComponentFree = $this->isComponentFree($componentName);
 
         if (!$isComponentFree['success']) {
-            return $isComponentFree;
+            return [
+                'message' => "Failed to Install the Component, please try again, or contact us.",
+                'success' => false
+            ];
         }
 
         if (!$this->token && !$isComponentFree['isFree']) {
@@ -34,8 +37,6 @@ class ComponentHttpClient
         $response =  Http::asJson()
             ->when(!$isComponentFree['isFree'], fn($http) => $http->withToken($this->token))
             ->get("{$this->url}/api/cli/components/$componentName");
-
-            dd($response->collect());
 
         if ($response->failed()) {
             $component = Str::of($componentName)->headline();
