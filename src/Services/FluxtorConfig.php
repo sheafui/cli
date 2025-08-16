@@ -45,4 +45,21 @@ class FluxtorConfig
             return null;
         }
     }
+
+    public static function getConfigFile()
+    {
+        try {
+            $configDirectory = self::configDirectory();
+
+            if(!$configDirectory) {
+                return null;
+            }
+            
+            $userData = File::get("$configDirectory/config.json");
+
+            return unserialize($userData)['user'];
+        } catch (\Throwable $th) {
+            return null;
+        }
+    }
 }

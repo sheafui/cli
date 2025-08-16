@@ -7,6 +7,7 @@ use Fluxtor\Cli\Commands\InstallComponentCommand;
 use Fluxtor\Cli\Commands\ListCommand;
 use Fluxtor\Cli\Commands\LoginCommand;
 use Fluxtor\Cli\Commands\LogoutCommand;
+use Fluxtor\Cli\Commands\WhoAmICommand;
 use Illuminate\Support\ServiceProvider as SupportServiceProvider;
 
 class ServiceProvider extends SupportServiceProvider
@@ -19,6 +20,7 @@ class ServiceProvider extends SupportServiceProvider
             $this->commands([ListCommand::class]);
             $this->commands([InstallComponentCommand::class]);
             $this->commands([LogoutCommand::class]);
+            $this->commands([WhoAmICommand::class]);
         }
 
         $this->publishes(
