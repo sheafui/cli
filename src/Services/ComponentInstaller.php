@@ -30,7 +30,7 @@ class ComponentInstaller
         try {
             $componentResources = $this->componentHttpClient->fetchResources($componentName);
 
-            if(!$componentResources['success']) {
+            if (!$componentResources['success']) {
                 $this->components->error($componentResources['message']);
                 return Command::FAILURE;
             }
@@ -39,7 +39,7 @@ class ComponentInstaller
                 return $this->performDryRun($componentResources['files'], $componentResources['dependencies']);
             }
 
-            return $this->performInstallation($componentName, $componentResources['data']);
+            $this->performInstallation($componentName, $componentResources['data']);
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 
@@ -53,13 +53,13 @@ class ComponentInstaller
     {
         $createdFiles = $this->installFiles($componentResources->get('files'));
 
+        $this->saveInstalledComponent($componentName);
+
         $component = Str::of($componentName)->headline();
 
         $this->reportInstallation($component, $createdFiles);
 
         $this->installDeps($componentResources->get('dependencies'));
-
-
     }
 
     public function performDryRun(array $files, array $dependencies)
@@ -86,7 +86,7 @@ class ComponentInstaller
 
     private function reportInstallation(string $component, array $createdFiles)
     {
-        $this->components->info($component . ' has been installed successfully.');
+        $this->command->line("  <bg=green;fg=black> $component </bg=green;fg=black> has been installed successfully.");
 
         foreach ($createdFiles as $file) {
             $this->components->info($file['path'] . ' has been ' . $file['action']);
@@ -138,33 +138,81 @@ class ComponentInstaller
         }
 
         if (array_key_exists('internal', $dependencies) && $depInternal = Arr::wrap($dependencies['internal'])) {
-            $this->components->warn('This component has an external dependencies must be installed to work.');
-            $installDependencies = $this->installationConfig->shouldInstallInternalDeps() ? true : confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
 
-            if (!$installDependencies) {
-                return;
-            }
-
-            $this->components->info('↳ Installing internal dependencies');
-            foreach ($depInternal as $dep) {
-                $this->install($dep);
-            }
+            $this->installInternalDeps($depInternal);
         }
 
         if (array_key_exists('external', $dependencies) && $depExternal = Arr::wrap($dependencies['external'])) {
 
-            $this->components->warn('This component has an external dependencies must be installed to work.');
-            $confirmInstall = $this->installationConfig->shouldInstallExternalDeps() ? true : confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
-
-            if (!$confirmInstall) {
-                return;
-            }
-
-            $this->components->info('↳ Installing external dependencies');
-            foreach ($depExternal as $key => $dep) {
-                $this->components->info("Installing $key...");
-                Process::run($dep[1]);
-            }
+            $this->installExternalDeps($depExternal);
         }
+    }
+
+    public function installInternalDeps(array $deps)
+    {
+        $this->components->warn('This component has an external dependencies must be installed to work.');
+        $installDependencies = $this->installationConfig->shouldInstallInternalDeps() ? true : confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
+
+        if (!$installDependencies) {
+            return;
+        }
+
+        $this->components->info('↳ Installing internal dependencies');
+
+        foreach ($deps as $dep => $info) {
+            if ($this->shouldInstallDependency($dep, $info))
+                $this->install($dep);
+        }
+
+        $this->components->info("All Dependencies installed and up to date.");
+    }
+
+    public function installExternalDeps(array $deps)
+    {
+        $this->components->warn('This component has an external dependencies must be installed to work.');
+        $confirmInstall = $this->installationConfig->shouldInstallExternalDeps() ? true : confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
+
+        if (!$confirmInstall) {
+            return;
+        }
+
+        $this->components->info('↳ Installing external dependencies');
+        foreach ($deps as $key => $dep) {
+            $this->components->info("Installing $key...");
+            Process::run($dep[1]);
+        }
+    }
+
+    public function shouldInstallDependency($dependency, $info)
+    {
+        $components = $this->getInstalledComponents();
+
+        if (!array_key_exists($dependency, $components['components'])) {
+            return true;
+        }
+
+        return $components['components'][$dependency]['installationTime'] < $info['lastModified'];
+    }
+
+    public function saveInstalledComponent(string $componentName)
+    {
+        $components = $this->getInstalledComponents();
+
+        $components['components'][$componentName] = [
+            'installationTime' => time()
+        ];
+
+        File::put(base_path('fluxtor.json'), json_encode($components, true));
+    }
+
+    public function getInstalledComponents()
+    {
+        $components = [];
+
+        if (File::exists(base_path('fluxtor.json'))) {
+            $components = json_decode(File::get(base_path('fluxtor.json')), true);
+        }
+
+        return $components;
     }
 }
