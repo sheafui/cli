@@ -23,7 +23,7 @@ class FluxtorConfig
         File::replace("$configDirectory/config.json", serialize($data));
     }
 
-    private static function configDirectory()
+    public static function configDirectory()
     {
         $home = getenv('HOME') ?: $_SERVER['HOME'] ?? (getenv('USERPROFILE') ?? ($_SERVER['USERPROFILE'] ?? null));
 
@@ -41,6 +41,23 @@ class FluxtorConfig
             $userData = File::get("$configDirectory/config.json");
 
             return unserialize($userData)['user']['token'];
+        } catch (\Throwable $th) {
+            return null;
+        }
+    }
+
+    public static function getConfigFile()
+    {
+        try {
+            $configDirectory = self::configDirectory();
+
+            if(!$configDirectory) {
+                return null;
+            }
+            
+            $userData = File::get("$configDirectory/config.json");
+
+            return unserialize($userData)['user'];
         } catch (\Throwable $th) {
             return null;
         }

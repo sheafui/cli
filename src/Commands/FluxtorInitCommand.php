@@ -156,7 +156,7 @@ class FluxtorInitCommand extends Command
         $defaultName = $this->option('theme-file');
 
         return text(
-            label: 'Theme CSS file name (without extension)',
+            label: 'Theme CSS file name',
             placeholder: $defaultName,
             default: $defaultName,
             hint: 'Generated Fluxtor theme file will be saved as {name}.css',

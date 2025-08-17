@@ -2,6 +2,7 @@
 
 namespace Fluxtor\Cli\Services;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Process;
 class PackageInitializationService
 {
 
+    protected ContentTemplateService $contentTemplateService;
     public function __construct(
         protected Command $command,
         protected $enablePhosphorIcons = false,
@@ -17,71 +19,59 @@ class PackageInitializationService
         protected $targetCssFile,
         protected string|null $jsDirectory,
         protected $forceOverwrite
-    ) {}
+    ) {
+        $this->contentTemplateService = new ContentTemplateService();
+        $this->validateConfiguration();
+    }
 
     /**
-     * The CSS theme content to add
-     *
-     * @var string
+     * Initialize the entire Fluxtor package with all dependencies
      */
-    protected $themeContent = '
-            /* By Fluxtor.dev */
-            @theme inline {
-            /* base color variables */
-
-            /* --color-neutral-900: var(--color-neutral-950); */
-
-            /* primary color varibles */
-            --color-primary: var(--color-neutral-800);
-            --color-primary-content: var(--color-neutral-800);
-            --color-primary-fg: var(--color-white);
-
-            /* radius variables */
-            --radius-field: 0.25rem;
-            --radius-box: 0.5rem;
-            }';
-
-    protected $darkThemeContent = '
-            @layer theme {
-                .dark {
-                    --color-primary: var(--color-white);
-                    --color-primary-content: var(--color-white);
-                    --color-primary-fg:  var(--color-neutral-800);
-                }
-            }';
-
     public function initializePackage()
     {
         try {
-            $this->command->info("Installing `wireui/heroicons`...");
-            Process::run('composer require wireui/heroicons');
-            $this->command->info("`wireui/heroicons` installed.");
-
-            if ($this->enablePhosphorIcons) {
-                $this->command->info("Installing `wireui/phosphoricons`...");
-                Process::run('composer require wireui/phosphoricons');
-                $this->command->info("`wireui/phosphoricons` installed.");
-            }
-
-            $this->command->info("*****************************************");
-            $this->command->info("*** Adding the required css variables ***");
-            $this->command->info("*****************************************");
+            $this->installComposerDependencies();
 
             $this->createCssThemeFile();
 
+            $this->installNodeDependencies();
+
             if ($this->enableDarkMode) {
-                $this->command->info("**********************************");
-                $this->command->info("*** Adding the dark Mode files ***");
-                $this->command->info("**********************************");
 
-                $javascriptAssetService = new JavaScriptAssetService($this->command, $this->jsDirectory);
-
-                $javascriptAssetService->createDarkModeAssets();
+                (new JavaScriptAssetService($this->command, $this->jsDirectory))->createDarkModeAssets();
             }
 
             return true;
         } catch (\Throwable $th) {
+            $this->command->error("Initialize Fluxtor Package Failed.\n\nIssue: " . $th->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Validate constructor configuration
+     */
+    protected function validateConfiguration(): void
+    {
+        if (empty($this->themeFileName)) {
+            throw new Exception('Theme file name cannot be empty');
+        }
+
+        if (empty($this->targetCssFile)) {
+            throw new Exception('Target CSS file name cannot be empty');
+        }
+
+        if ($this->enableDarkMode && empty($this->jsDirectory)) {
+            throw new Exception('JavaScript directory is required when dark mode is enabled');
+        }
+
+        // Ensure file names have proper extensions
+        if (!str_ends_with($this->themeFileName, '.css')) {
+            $this->themeFileName .= '.css';
+        }
+
+        if (!str_ends_with($this->targetCssFile, '.css')) {
+            $this->targetCssFile .= '.css';
         }
     }
 
@@ -95,11 +85,7 @@ class PackageInitializationService
 
         // Create Theme Css file
 
-        $themeContent = $this->themeContent;
-
-        if ($this->enableDarkMode) {
-            $themeContent .= "\n\n{$this->darkThemeContent}";
-        }
+        $themeContent = $this->contentTemplateService->generateThemeCss($this->enableDarkMode);
 
         File::put($themeFile, $themeContent);
         $this->command->info('Created theme file: ' . $themeFile);
@@ -123,17 +109,132 @@ class PackageInitializationService
 
         // Check if import already exists
         if (
-            strpos($appCssContent, "@import './theme.css'") !== false
+            strpos($appCssContent, "@import './{$this->themeFileName}'") !== false
         ) {
             $this->command->info('Import statement already exists in main CSS file.');
             return;
         }
 
         // Add import at the beginning
-        $importStatement = "@import './theme.css'; /* By Fluxtor.dev */ \n\n";
+        $importStatement = "@import './{$this->themeFileName}'; /* By Fluxtor.dev */ \n\n";
         $newContent = $importStatement . $appCssContent;
 
         File::put($targetCssFile, $newContent);
         $this->command->info("Added import statement to: {$targetCssFile}");
+    }
+
+    public function installComposerDependencies()
+    {
+        $packages = ['wireui/heroicons'];
+
+        if ($this->enablePhosphorIcons) {
+            $packages[] = 'wireui/phosphoricons';
+        }
+
+
+        foreach ($packages as $package) {
+            if (!$this->isComposerPackageInstalled($package)) {
+                $this->command->info("Installing $package...");
+                $result = Process::run("composer require $package");
+
+                if ($result->failed()) {
+                    $this->command->error("Failed to install $package " . $result->errorOutput());
+                }
+            }
+        }
+    }
+
+    public function installNodeDependencies()
+    {
+        // Check if Alpine.js available
+        if (!$this->isNpmPackageInstalled('alpinejs')) {
+            $this->command->warn("Missing a required package: Alpinejs");
+            $this->command->info("Installing Alpinejs...");
+            Process::run("npm install alpinejs");
+
+            $appJsContent = File::get(resource_path('/js/app.js'));
+
+            if (!$this->isAlpineAlreadyImported($appJsContent)) {
+                $alpineInitialize = $this->contentTemplateService->getStubContent('alpinejs');
+
+                $newContent = $appJsContent . $alpineInitialize;
+
+                if (!File::exists(resource_path('/js/app.js'))) {
+                    $this->command->warn('Missing app.js file.');
+
+                    File::makeDirectory(resource_path('/js/app.js'), 0755, true);
+
+                    $this->command->info('app.js file created: resources/js/app.js');
+                }
+
+                File::put(resource_path('/js/app.js'), $newContent);
+            }
+        }
+    }
+
+    /**
+     * Check if Alpine.js is already imported
+     */
+    protected function isAlpineAlreadyImported(string $content): bool
+    {
+        $patterns = [
+            '/import\s+.*alpine/i',
+            '/require\s*\(\s*[\'"]alpine/i',
+            '/from\s+[\'"]alpinejs[\'"]/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $content)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isNpmPackageInstalled($packageName)
+    {
+        $packageJsonPath = base_path('package.json');
+
+        if (!file_exists($packageJsonPath)) {
+            return false;
+        }
+
+        $packageJson = json_decode(File::get($packageJsonPath), true);
+
+        // Check in dependencies
+        if (isset($packageJson['dependencies'][$packageName])) {
+            return true;
+        }
+
+        // Check in devDependencies
+        if (isset($packageJson['devDependencies'][$packageName])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isComposerPackageInstalled($packageName)
+    {
+        $composerJsonPath = base_path('composer.json');
+
+        if (!File::exists($composerJsonPath)) {
+            return false;
+        }
+
+        $composerJson = json_decode(File::get($composerJsonPath), true);
+
+        // Check in require
+        if (isset($composerJson['require'][$packageName])) {
+            return true;
+        }
+
+        // Check in require-dev
+        if (isset($composerJson['require-dev'][$packageName])) {
+            return true;
+        }
+
+        return false;
     }
 }
