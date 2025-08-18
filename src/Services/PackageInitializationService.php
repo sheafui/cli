@@ -7,6 +7,9 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\text;
+
 class PackageInitializationService
 {
 
@@ -135,7 +138,9 @@ class PackageInitializationService
         foreach ($packages as $package) {
             if (!$this->isComposerPackageInstalled($package)) {
                 $this->command->info("Installing $package...");
-                $result = Process::run("composer require $package");
+                $result = Process::forever()->run("composer require $package", function (string $type, string $output) {
+                    echo $output;
+                });
 
                 if ($result->failed()) {
                     $this->command->error("Failed to install $package " . $result->errorOutput());
@@ -146,13 +151,31 @@ class PackageInitializationService
 
     public function installNodeDependencies()
     {
-        // Check if Alpine.js available
-        if (!$this->isNpmPackageInstalled('alpinejs')) {
-            $this->command->warn("Missing a required package: Alpinejs");
-            $this->command->info("Installing Alpinejs...");
-            Process::run("npm install alpinejs");
+        $isUsingLivewire = confirm(
+            label: "Will this project use Livewire?",
+            default: false,
+            hint: "Choose 'yes' if your project is using Livewire v2 or v3."
+        );
 
-            $appJsContent = File::get(resource_path('/js/app.js'));
+        // Check if Alpine.js available
+        if (!$isUsingLivewire && !$this->isNpmPackageInstalled('alpinejs')) {
+            $needsAlpine = confirm(
+                label: "Alpine.js is not installed. Would you like to install it now?",
+                default: true,
+                hint: "Alpine.js is required for interactive components. Skipping may cause some features to break."
+            );
+
+            if (!$needsAlpine) {
+                $this->command->warn("Alpine.js installation skipped. Some UI components may not function correctly.");
+                return;
+            }
+
+            $this->command->info("Installing Alpinejs...");
+            Process::forever()->run("npm install alpinejs @alpinejs/anchor", function (string $type, string $output) {
+                echo $output;
+            });
+
+            $appJsContent = $this->getMainJsFile();
 
             if (!$this->isAlpineAlreadyImported($appJsContent)) {
                 $alpineInitialize = $this->contentTemplateService->getStubContent('alpinejs');
@@ -172,6 +195,23 @@ class PackageInitializationService
         }
     }
 
+
+    public function getMainJsFile()
+    {
+        $path = resource_path('/js/app.js');
+        if (!File::exists($path)) {
+            $path = text(
+                label: "Enter the path (relative to resources/) to your main JS file:",
+                placeholder: '/js/app.js'
+            );
+        }
+
+        if (! File::exists($path)) {
+            throw new Exception("The file '{$path}' does not exist in resources/. Please create it or specify the correct path.");
+        }
+
+        return File::get($path);
+    }
     /**
      * Check if Alpine.js is already imported
      */
