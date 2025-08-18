@@ -16,6 +16,7 @@ use function Laravel\Prompts\confirm;
 class ComponentInstaller
 {
     protected ComponentHttpClient $componentHttpClient;
+    protected bool $componentOutDated = false;
 
     public function __construct(
         protected Command $command,
@@ -66,7 +67,7 @@ class ComponentInstaller
     {
 
         foreach ($files as $file) {
-            $this->components->info("This File will be create: {$file['path']}");
+            $this->components->info("Will create: {$file['path']}");
         }
 
         if (!$dependencies) {
@@ -74,9 +75,9 @@ class ComponentInstaller
         }
 
         if ($internalDeps = Arr::wrap($dependencies['internal'])) {
-            $this->command->info("This internal dependencies will be install: \n\n");
+            $this->command->info("Internal dependencies to install:\n");
             foreach ($internalDeps as $dep) {
-                $this->command->info("Dependency: $dep");
+                $this->command->info("  • $dep");
                 $this->install($dep);
             }
         }
@@ -116,7 +117,14 @@ class ComponentInstaller
                 continue;
             }
 
-            $shouldOverride = $forceFileCreation ? true : confirm($filePath . ' File already exists, do you want to override it?');
+
+            $shouldOverride = $forceFileCreation;
+
+            if (!$shouldOverride) {
+                $overrideMessage = "File already exists: $filePath. Overwrite?";
+                $hint = $this->componentOutDated ? "Component updates available. Reinstall recommended to ensure you have the latest files." : "";
+                $shouldOverride = confirm(label: $overrideMessage, hint: $hint);
+            }
 
             if (!$shouldOverride) {
                 $createdFiles[] = ['path' => $filePath, 'action' => 'skipped'];
@@ -150,27 +158,32 @@ class ComponentInstaller
 
     public function installInternalDeps(array $deps)
     {
-        $this->components->warn('This component has an external dependencies must be installed to work.');
-        $installDependencies = $this->installationConfig->shouldInstallInternalDeps() ? true : confirm(label: 'This component need dependencies to work as expected, do you want to install them?', default: true);
+        $this->components->warn('This component requires internal dependencies to function properly.');
+        $installDependencies = $this->installationConfig->shouldInstallInternalDeps() ? true : confirm(label: 'Install required dependencies?', default: true);
 
         if (!$installDependencies) {
             return;
         }
 
-        $this->components->info('↳ Installing internal dependencies');
+        $this->components->info('↳ Installing internal dependencies.');
 
+        $installedDependencies = false;
         foreach ($deps as $dep => $info) {
-            if ($this->shouldInstallDependency($dep, $info))
+            if ($this->shouldInstallDependency($dep, $info)) {
+                $this->componentOutDated = true;
+                $installedDependencies = true;
                 $this->install($dep);
+            }
         }
 
-        $this->components->info("All Dependencies installed and up to date.");
+        $installationMessage = $installedDependencies ? "All dependencies installed successfully." : "Dependencies are already up to date.";
+        $this->components->info($installationMessage);
     }
 
     public function installExternalDeps(array $deps)
     {
-        $this->components->warn('This component has an external dependencies must be installed to work.');
-        $confirmInstall = $this->installationConfig->shouldInstallExternalDeps() ? true : confirm(label: 'This component need an external dependencies to work, do you want to install them?', default: true);
+        $this->components->warn('This component requires external packages to function properly.');
+        $confirmInstall = $this->installationConfig->shouldInstallExternalDeps() ? true : confirm(label: 'Install required external packages?', default: true);
 
         if (!$confirmInstall) {
             return;
