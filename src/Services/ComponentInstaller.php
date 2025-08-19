@@ -44,7 +44,7 @@ class ComponentInstaller
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 
-            if (!app()->isProduction()) {
+            if (config('fluxtor.env') !== 'production') {
                 $this->components->error($th->getTraceAsString());
             }
         }

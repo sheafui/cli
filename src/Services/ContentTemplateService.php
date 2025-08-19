@@ -46,35 +46,4 @@ class ContentTemplateService
         return $content;
     }
 
-    /**
-     * Generate JavaScript content with replacements
-     */
-    public function generateJavaScript(string $stubName): string
-    {
-        return $this->getStubContent($stubName);
-    }
-
-    /**
-     * Get available stub files
-     */
-    public function getAvailableStubs(): array
-    {
-        if (!File::exists($this->stubsPath)) {
-            return [];
-        }
-
-        $files = File::files($this->stubsPath);
-
-        return array_map(function ($file) {
-            return pathinfo($file->getFilename(), PATHINFO_FILENAME);
-        }, $files);
-    }
-
-    /**
-     * Validate stub exists before using
-     */
-    public function stubExists(string $stubName): bool
-    {
-        return File::exists($this->stubsPath . "/{$stubName}.stub");
-    }
 }
