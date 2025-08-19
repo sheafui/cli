@@ -8,7 +8,7 @@
     "fluxtor",
     "package",
     "laravel-package",
-    "artisan-command"
+    "artisan-command"   
   ],
   "homepage": "https://github.com/fluxtorphp/cli",
   "license": "MIT",

@@ -22,7 +22,7 @@ class ComponentHttpClient
 
         if (!$isComponentFree['success']) {
             return [
-                'message' => "Failed to Install the Component, please try again, or contact us.",
+                'message' => $isComponentFree['message'],
                 'success' => false
             ];
         }
