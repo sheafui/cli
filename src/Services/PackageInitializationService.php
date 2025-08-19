@@ -21,7 +21,7 @@ class PackageInitializationService
         protected $themeFileName,
         protected $targetCssFile,
         protected string|null $jsDirectory,
-        protected $forceOverwrite
+        protected bool $forceOverwrite,
     ) {
         $this->contentTemplateService = new ContentTemplateService();
         $this->validateConfiguration();
@@ -35,19 +35,114 @@ class PackageInitializationService
         try {
             $this->installComposerDependencies();
 
-            $this->createCssThemeFile();
-
             $this->installNodeDependencies();
+
+            $this->createCssThemeFile();
 
             if ($this->enableDarkMode) {
 
-                (new JavaScriptAssetService($this->command, $this->jsDirectory))->createDarkModeAssets();
+                (new JavaScriptAssetService($this->command, $this->jsDirectory, $this->forceOverwrite))->createDarkModeAssets();
             }
 
             return true;
         } catch (\Throwable $th) {
             $this->command->error("Initialize Fluxtor Package Failed.\n\nIssue: " . $th->getMessage());
             return false;
+        }
+    }
+
+    public function installComposerDependencies()
+    {
+        $packages = ['wireui/heroicons'];
+
+        if ($this->enablePhosphorIcons) {
+            $packages[] = 'wireui/phosphoricons';
+        }
+
+
+        foreach ($packages as $package) {
+            if ($this->isComposerPackageInstalled($package)) {
+                continue;
+            }
+
+            $this->command->info("Installing $package...");
+            $result = Process::run("composer require $package");
+
+            if ($result->failed()) {
+                $this->command->error("Failed to install $package -" . $result->errorOutput());
+            }
+        }
+    }
+
+    public function installNodeDependencies()
+    {
+        $isUsingLivewire = confirm(
+            label: "Will this project use Livewire?",
+            default: false,
+            hint: "Choose 'yes' if your project is using Livewire v3."
+        );
+
+        // Check if Alpine.js available
+        if ($isUsingLivewire || $this->isNpmPackageInstalled('alpinejs')) {
+            return;
+        }
+
+        $needsAlpine = confirm(
+            label: "Alpine.js is not installed. Would you like to install it now?",
+            default: true,
+            hint: "Alpine.js is required for interactive components. Skipping may cause some features to break."
+        );
+
+        if (!$needsAlpine) {
+            $this->command->warn("Alpine.js installation skipped. Some UI components may not function correctly.");
+            return;
+        }
+
+        $this->command->info("Installing Alpinejs...");
+        $result = Process::run("npm install alpinejs @alpinejs/anchor");
+
+        if ($result->failed()) {
+            $this->command->error("Failed to install Alpine.js. {$result->errorOutput()}");
+            return;
+        }
+
+        $appJsPath = $this->getMainJsFilePath();
+
+        $appJsContent = File::get($appJsPath);
+
+        if ($this->isAlpineAlreadyImported($appJsContent)) {
+            return;
+        }
+
+        $alpineInitialize = $this->contentTemplateService->getStubContent('alpinejs');
+
+        $newContent = $appJsContent . $alpineInitialize;
+
+        File::put($appJsPath, $newContent);
+    }
+
+    /**
+     * Create a theme.css file and import it
+     */
+    protected function createCssThemeFile()
+    {
+        $themeFile = resource_path("css/{$this->themeFileName}");
+        $appCssFile = resource_path("css/{$this->targetCssFile}");
+
+        // Create Theme Css file
+
+        $themeContent = $this->contentTemplateService->generateThemeCss($this->enableDarkMode);
+
+        File::put($themeFile, $themeContent);
+        $this->command->info('Created theme file: ' . $themeFile);
+
+        // Add import to main CSS file if it exists
+        if (File::exists($appCssFile)) {
+            $this->addImportToAppCssFile($appCssFile);
+        } else {
+            $this->command->warn("Main CSS file '{$this->targetCssFile}' not found in resources/css/");
+            $this->command->info("You can manually import the theme by adding this line to your main CSS file:");
+            $this->command->line("@import './theme.css';");
         }
     }
 
@@ -79,124 +174,29 @@ class PackageInitializationService
     }
 
     /**
-     * Create a theme.css file and import it
-     */
-    protected function createCssThemeFile()
-    {
-        $themeFile = resource_path("css/{$this->themeFileName}");
-        $appCssFile = resource_path('css/' . $this->targetCssFile);
-
-        // Create Theme Css file
-
-        $themeContent = $this->contentTemplateService->generateThemeCss($this->enableDarkMode);
-
-        File::put($themeFile, $themeContent);
-        $this->command->info('Created theme file: ' . $themeFile);
-
-        // Add import to main CSS file if it exists
-        if (File::exists($appCssFile)) {
-            $this->addImportToAppCssFile($appCssFile);
-        } else {
-            $this->command->warn("Main CSS file '{$this->targetCssFile}' not found in resources/css/");
-            $this->command->info("You can manually import the theme by adding this line to your main CSS file:");
-            $this->command->line("@import 'theme.css';");
-        }
-    }
-
-    /**
      * Add import statement to main CSS file
      */
-    protected function addImportToAppCssFile($targetCssFile)
+    protected function addImportToAppCssFile($path)
     {
-        $appCssContent = File::get($targetCssFile);
+        $content = File::get($path);
 
         // Check if import already exists
         if (
-            strpos($appCssContent, "@import './{$this->themeFileName}'") !== false
+            strpos($content, "@import './{$this->themeFileName}'") !== false
         ) {
             $this->command->info('Import statement already exists in main CSS file.');
             return;
         }
 
         // Add import at the beginning
-        $importStatement = "@import './{$this->themeFileName}'; /* By Fluxtor.dev */ \n\n";
-        $newContent = $importStatement . $appCssContent;
+        $importStatement = "@import './{$this->themeFileName}'; /* By Fluxtor.dev */ \n";
+        $newContent = $importStatement . $content;
 
-        File::put($targetCssFile, $newContent);
-        $this->command->info("Added import statement to: {$targetCssFile}");
+        File::put($path, $newContent);
+        $this->command->info("Added import statement to: {$path}");
     }
 
-    public function installComposerDependencies()
-    {
-        $packages = ['wireui/heroicons'];
-
-        if ($this->enablePhosphorIcons) {
-            $packages[] = 'wireui/phosphoricons';
-        }
-
-
-        foreach ($packages as $package) {
-            if (!$this->isComposerPackageInstalled($package)) {
-                $this->command->info("Installing $package...");
-                $result = Process::forever()->run("composer require $package", function (string $type, string $output) {
-                    echo $output;
-                });
-
-                if ($result->failed()) {
-                    $this->command->error("Failed to install $package " . $result->errorOutput());
-                }
-            }
-        }
-    }
-
-    public function installNodeDependencies()
-    {
-        $isUsingLivewire = confirm(
-            label: "Will this project use Livewire?",
-            default: false,
-            hint: "Choose 'yes' if your project is using Livewire v2 or v3."
-        );
-
-        // Check if Alpine.js available
-        if (!$isUsingLivewire && !$this->isNpmPackageInstalled('alpinejs')) {
-            $needsAlpine = confirm(
-                label: "Alpine.js is not installed. Would you like to install it now?",
-                default: true,
-                hint: "Alpine.js is required for interactive components. Skipping may cause some features to break."
-            );
-
-            if (!$needsAlpine) {
-                $this->command->warn("Alpine.js installation skipped. Some UI components may not function correctly.");
-                return;
-            }
-
-            $this->command->info("Installing Alpinejs...");
-            Process::forever()->run("npm install alpinejs @alpinejs/anchor", function (string $type, string $output) {
-                echo $output;
-            });
-
-            $appJsContent = $this->getMainJsFile();
-
-            if (!$this->isAlpineAlreadyImported($appJsContent)) {
-                $alpineInitialize = $this->contentTemplateService->getStubContent('alpinejs');
-
-                $newContent = $appJsContent . $alpineInitialize;
-
-                if (!File::exists(resource_path('/js/app.js'))) {
-                    $this->command->warn('Missing app.js file.');
-
-                    File::makeDirectory(resource_path('/js/app.js'), 0755, true);
-
-                    $this->command->info('app.js file created: resources/js/app.js');
-                }
-
-                File::put(resource_path('/js/app.js'), $newContent);
-            }
-        }
-    }
-
-
-    public function getMainJsFile()
+    public function getMainJsFilePath()
     {
         $path = resource_path('/js/app.js');
         if (!File::exists($path)) {
@@ -210,7 +210,7 @@ class PackageInitializationService
             throw new Exception("The file '{$path}' does not exist in resources/. Please create it or specify the correct path.");
         }
 
-        return File::get($path);
+        return $path;
     }
     /**
      * Check if Alpine.js is already imported

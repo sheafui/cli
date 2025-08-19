@@ -32,7 +32,6 @@ class JavaScriptAssetService
 
             $utilsCreated = $this->createUtilsFile();
             $themeCreated = $this->createThemeFile();
-            $globalsCreated = $this->ensureGlobalsDirectory();
 
             if ($utilsCreated || $themeCreated) {
                 $this->displayCreationSummary($utilsCreated, $themeCreated);
@@ -48,32 +47,13 @@ class JavaScriptAssetService
     }
 
     /**
-     * Ensure directory structure exists
-     */
-    protected function ensureDirectoryStructure(): void
-    {
-        $baseDir = resource_path("js/{$this->jsDirectory}");
-        $globalsDir = "{$baseDir}/globals";
-
-        if (!File::exists($baseDir)) {
-            File::makeDirectory($baseDir, 0755, true);
-            $this->command->info("Created directory: resources/js/{$this->jsDirectory}");
-        }
-
-        if (!File::exists($globalsDir)) {
-            File::makeDirectory($globalsDir, 0755, true);
-            $this->command->info("Created directory: resources/js/{$this->jsDirectory}/globals");
-        }
-    }
-
-    /**
      * Create utils.js file
      */
     protected function createUtilsFile(): bool
     {
-        $filePath = resource_path("js/{$this->jsDirectory}/utils.js");
+        $path = resource_path("js/{$this->jsDirectory}/utils.js");
 
-        if (File::exists($filePath) && !$this->forceOverwrite) {
+        if (File::exists($path) && !$this->forceOverwrite) {
             $this->command->warn("File already exists: utils.js");
 
             if (!$this->command->confirm('Overwrite existing utils.js file?', false)) {
@@ -82,7 +62,7 @@ class JavaScriptAssetService
         }
 
         $content = $this->contentTemplateService->getStubContent('utils.js');
-        File::put($filePath, $content);
+        File::put($path, $content);
 
         $this->command->info("✓ Created: resources/js/{$this->jsDirectory}/utils.js");
         return true;
@@ -111,11 +91,22 @@ class JavaScriptAssetService
     }
 
     /**
-     * Ensure globals directory exists (for organization)
+     * Ensure directory structure exists
      */
-    protected function ensureGlobalsDirectory(): bool
+    protected function ensureDirectoryStructure(): void
     {
-        return File::exists(resource_path("js/{$this->jsDirectory}/globals"));
+        $baseDir = resource_path("js/{$this->jsDirectory}");
+        $globalsDir = "{$baseDir}/globals";
+
+        if (!File::exists($baseDir)) {
+            File::makeDirectory($baseDir, 0755, true);
+            $this->command->info("Created directory: resources/js/{$this->jsDirectory}");
+        }
+
+        if (!File::exists($globalsDir)) {
+            File::makeDirectory($globalsDir, 0755, true);
+            $this->command->info("Created directory: resources/js/{$this->jsDirectory}/globals");
+        }
     }
 
     /**
@@ -140,51 +131,33 @@ class JavaScriptAssetService
      */
     protected function addImportToAppJsFile(): void
     {
-        $appJsFile = 'app.js';
-        $appJsFilePath = resource_path("js/$appJsFile");
-        if (!File::exists($appJsFilePath)) {
-            $appJsFile = text(
+        $file = 'app.js';
+        $path = resource_path("js/$file");
+        
+        if (!File::exists($path)) {
+            $file = text(
                 label: "Target Js File for dark mode integration.",
                 placeholder: 'app.js',
                 hint: "File path relative to resources/js directory where Fluxtor assets will be injected."
             );
         }
 
-        $appJsContent = File::get($appJsFilePath);
-        $newContent = $appJsContent;
+        $content = File::get($path);
 
         // Check if import already exists
-        if (strpos($appJsContent, "import './{$this->jsDirectory}/globals/theme.js'") === false) {
+        if (strpos($content, "import './{$this->jsDirectory}/globals/theme.js'") === false) {
             $importStatement = "import './{$this->jsDirectory}/globals/theme.js'; /* By Fluxtor.dev */ \n\n";
-            $newContent = $importStatement . $newContent;
+            $content = $importStatement . $content;
         }
 
-        if (strpos($appJsContent, "import './{$this->jsDirectory}/utils.js'") === false) {
+        if (strpos($content, "import './{$this->jsDirectory}/utils.js'") === false) {
             $importStatement = "import './{$this->jsDirectory}/utils.js'; /* By Fluxtor.dev */ \n\n";
-            $newContent = $importStatement . $newContent;
+            $content = $importStatement . $content;
         }
 
-        File::put($appJsFilePath, $newContent);
+        File::put($path, $content);
 
-        $this->command->info("Added import statement to: {$appJsFile}");
+        $this->command->info("Added import statement to: {$file}");
     }
 
-    /**
-     * Check if JavaScript files already exist
-     */
-    public function assetsExist(): array
-    {
-        return [
-            'utils' => File::exists(resource_path("js/{$this->jsDirectory}/utils.js")),
-            'theme' => File::exists(resource_path("js/{$this->jsDirectory}/globals/theme.js")),
-        ];
-    }
-
-    /**
-     * Get the relative path for JavaScript files
-     */
-    public function getJsPath(): string
-    {
-        return "resources/js/{$this->jsDirectory}";
-    }
 }

@@ -36,14 +36,15 @@ class InstallComponentCommand extends Command
     {
 
         $componentName = $this->getComponentName();
-        $force = $this->option("force");
-        $internalDeps = $this->option("internal-deps");
-        $externalDeps = $this->option("external-deps");
-        $isDryRun = $this->option("dry-run");
-        $installationConfig = new InstallationConfig($force, $internalDeps, $externalDeps, $isDryRun);
 
-        $componentInstaller = new ComponentInstaller($this, $this->components, $installationConfig);
-        $componentInstaller->install($componentName);
+        $installationConfig = new InstallationConfig(
+            force: $this->option("force"),
+            internalDeps: $this->option("internal-deps"),
+            externalDeps: $this->option("external-deps"),
+            isDryRun: $this->option("dry-run")
+        );
+
+        (new ComponentInstaller($this, $this->components, $installationConfig))->install($componentName);
     }
 
     private function getComponentName()
@@ -51,7 +52,7 @@ class InstallComponentCommand extends Command
         $componentName = $this->argument('name');
 
         if (!$componentName) {
-            $componentName = text(label: 'Type the component name', placeholder: 'simple-search', required: true);
+            $componentName = text(label: 'Type the component name', placeholder: 'button', required: true);
         }
 
         return $componentName;

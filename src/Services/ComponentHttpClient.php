@@ -2,6 +2,7 @@
 
 namespace Fluxtor\Cli\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -39,10 +40,10 @@ class ComponentHttpClient
 
         if ($response->failed()) {
             $component = Str::of($componentName)->headline();
-            $responseJson = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
+            $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
 
             return [
-                'message' => "Failed to install the component '$component'. \n $responseJson",
+                'message' => "Failed to install the component '$component'. \n $message",
                 'success' => false
             ];
         }
@@ -55,6 +56,13 @@ class ComponentHttpClient
 
     public function isComponentFree(string $componentName)
     {
-        return Http::get("{$this->url}/api/cli/components/$componentName/is-free")->collect();
+        $response = Http::get("{$this->url}/api/cli/components/$componentName/is-free");
+
+        if($response->failed()) {
+            $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
+            throw new Exception("Failed to get the data. {$message}");
+        }
+
+        return $response->collect();
     }
 }
