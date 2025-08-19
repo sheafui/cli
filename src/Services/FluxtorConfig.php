@@ -62,4 +62,26 @@ class FluxtorConfig
             return null;
         }
     }
+
+    public static function saveInstalledComponent(string $componentName)
+    {
+        $installedComponents = self::getInstalledComponents();
+
+        $installedComponents['components'][$componentName] = [
+            'installationTime' => time()
+        ];
+
+        File::put(base_path('fluxtor.json'), json_encode($installedComponents, true));
+    }
+
+    public static function getInstalledComponents()
+    {
+        $installedComponents = [];
+
+        if (File::exists(base_path('fluxtor.json'))) {
+            $installedComponents = json_decode(File::get(base_path('fluxtor.json')), true);
+        }
+
+        return $installedComponents;
+    }
 }

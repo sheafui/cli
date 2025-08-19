@@ -7,16 +7,17 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
 use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\select;
 
 class ComponentInstaller
 {
     protected ComponentHttpClient $componentHttpClient;
-    protected bool $componentOutDated = false;
+    protected FluxtorFileInstaller $fileInstaller;
+    protected DependencyInstaller $dependencyInstaller;
+    protected string $name = '';
 
     public function __construct(
         protected Command $command,
@@ -24,11 +25,26 @@ class ComponentInstaller
         protected InstallationConfig $installationConfig
     ) {
         $this->componentHttpClient = new ComponentHttpClient();
+        $this->fileInstaller = new FluxtorFileInstaller($this->installationConfig);
+        $this->dependencyInstaller = new DependencyInstaller(
+            installationConfig: $this->installationConfig,
+            command: $this->command,
+            components: $this->components
+        );
     }
 
     public function install(string $componentName)
     {
         try {
+
+            $this->name = $componentName;
+            $existingChoice = $this->handleExistingComponent();
+
+            if ($existingChoice === Command::INVALID) {
+                $this->command->error(" Cancelled");
+                return;
+            }
+
             $componentResources = $this->componentHttpClient->fetchResources($componentName);
 
             if (!$componentResources['success']) {
@@ -36,11 +52,17 @@ class ComponentInstaller
                 return Command::FAILURE;
             }
 
+            $this->command->newLine();
+
             if ($this->installationConfig->isDryRun()) {
-                return $this->performDryRun($componentResources['files'], $componentResources['dependencies']);
+                return $this->performDryRun($componentResources['data']['files'], $componentResources['data']['dependencies']);
             }
 
-            $this->performInstallation($componentName, $componentResources['data']);
+            if ($this->installationConfig->shouldInstallOnlyDeps()) {
+                return $this->performOnlyDepsInstallation($componentResources['data']);
+            }
+
+            $this->performInstallation($componentResources['data']);
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 
@@ -50,182 +72,123 @@ class ComponentInstaller
         }
     }
 
-    public function performInstallation(string $componentName, Collection $componentResources)
+    public function confirmDestructiveAction()
     {
-        $createdFiles = $this->installFiles($componentResources->get('files'));
+        return confirm("All the component files will be overwritten, you might lose your modifications. are you sure you want to processed?");
+    }
 
-        $this->saveInstalledComponent($componentName);
+    public function performInstallation(Collection $componentResources)
+    {
+        $createdFiles = $this->fileInstaller->install($componentResources->get('files'));
 
-        $component = Str::of($componentName)->headline();
+        FluxtorConfig::saveInstalledComponent($this->name);
 
-        $this->reportInstallation($component, $createdFiles);
+        $this->reportInstallation($createdFiles);
 
-        $this->installDeps($componentResources->get('dependencies'));
+        $this->dependencyInstaller->install($componentResources->get('dependencies'));
+
+    }
+
+    public function performOnlyDepsInstallation(Collection $componentResources)
+    {
+        $name = $this->installationConfig->componentHeadlineName();
+        $dependencies = $componentResources->get('dependencies');
+
+        if (!$dependencies) {
+            $this->command->info("<fg=white></fg=white> <bg=green;fg=black> $name </bg=green;fg=black> has no dependencies to be installed.");
+            return;
+        }
+        $this->command->info(" <fg=white>Installing Only Dependencies of</fg=white> <bg=green;fg=black> $name </bg=green;fg=black>");
+
+        $this->dependencyInstaller->install($dependencies);
     }
 
     public function performDryRun(array $files, array $dependencies)
     {
 
         foreach ($files as $file) {
-            $this->components->info("Will create: {$file['path']}");
+            $this->command->info("<fg=white>Will create: {$file['path']}</fg=white>");
         }
 
-        if (!$dependencies) {
-            return;
-        }
-
-        if ($internalDeps = Arr::wrap($dependencies['internal'])) {
-            $this->command->info("Internal dependencies to install:\n");
-            foreach ($internalDeps as $dep) {
-                $this->command->info("  • $dep");
-                $this->install($dep);
-            }
-        }
+        $this->dependencyInstaller->install(Arr::wrap($dependencies['internal']));
 
         return Command::SUCCESS;
     }
 
-    private function reportInstallation(string $component, array $createdFiles)
+    private function reportInstallation(array $createdFiles)
     {
-        $this->command->line("  <bg=green;fg=black> $component </bg=green;fg=black> has been installed successfully.");
+        $name = $this->installationConfig->componentHeadlineName();
+
+        $this->command->line(" <bg=green;fg=black> $name </bg=green;fg=black> <fg=white>has been installed successfully.</fg=white>");
 
         foreach ($createdFiles as $file) {
-            $this->components->info($file['path'] . ' has been ' . $file['action']);
+            $this->command->info(" <fg=white>{$file['path']} has been</fg=white> <bg=green;fg=black> {$file['action']} </bg=green;fg=black>\n");
         }
     }
 
-    private function createComponentFile(string $filePath, string $fileContent)
+    public function handleExistingComponent()
     {
-        $directory = str($filePath)->beforeLast('/');
-        File::ensureDirectoryExists($directory);
-        File::replace($filePath, $fileContent);
-    }
-
-
-    private function installFiles($files)
-    {
-        $createdFiles = [];
-        $forceFileCreation = $this->installationConfig->shouldForceOverwriting();
-
-        foreach ($files as $file) {
-            $filePath = $file['path'];
-            $content = $file['content'];
-
-            if (!file_exists($filePath)) {
-                $this->createComponentFile($filePath, $content);
-                $createdFiles[] = ['path' => $filePath, 'action' => 'created'];
-                continue;
-            }
-
-
-            $shouldOverride = $forceFileCreation;
-
-            if (!$shouldOverride) {
-                $overrideMessage = "File already exists: $filePath. Overwrite?";
-                $hint = $this->componentOutDated ? "Component updates available. Reinstall recommended to ensure you have the latest files." : "";
-                $shouldOverride = confirm(label: $overrideMessage, hint: $hint);
-            }
-
-            if (!$shouldOverride) {
-                $createdFiles[] = ['path' => $filePath, 'action' => 'skipped'];
-                continue;
-            }
-
-            $this->createComponentFile($filePath, $content);
-
-            $createdFiles[] = ['path' => $filePath, 'action' => 'overridden'];
-        }
-
-        return $createdFiles;
-    }
-
-    private function installDeps($dependencies)
-    {
-        if (!$dependencies) {
+        if (!$this->ensureComponentIsInstalled() || $this->installationConfig->shouldForceOverwriting()) {
             return;
         }
 
-        if (array_key_exists('internal', $dependencies) && $depInternal = Arr::wrap($dependencies['internal'])) {
+        $name = $this->installationConfig->componentHeadlineName(); // Assuming you have this method
 
-            $this->installInternalDeps($depInternal);
-        }
+        $choice = select(
+            label: "Component '{$name}' already exists. What would you like to do?",
+            options: [
+                'interactive' => 'Prompt me for each file (recommended)',
+                'dependencies' => 'Skip component files, only update dependencies',
+                'overwrite' => 'Overwrite all files without asking (destructive)',
+                'cancel' => 'Cancel installation'
+            ],
+            default: 'prompt'
+        );
 
-        if (array_key_exists('external', $dependencies) && $depExternal = Arr::wrap($dependencies['external'])) {
+        return $this->processExistingComponentChoice($choice);
+    }
 
-            $this->installExternalDeps($depExternal);
+    public function processExistingComponentChoice($choice)
+    {
+        return match ($choice) {
+            'interactive' => $this->handleInteractiveChoice(),
+
+            'dependencies' => $this->handleDependenciesChoice(),
+
+            'overwrite' => $this->handleOverwriteChoice(),
+
+            'cancel' => Command::INVALID,
+        };
+    }
+
+    public function handleInteractiveChoice()
+    {
+        info('Will prompt you for each file during installation');
+        return null;
+    }
+
+
+    public function handleDependenciesChoice()
+    {
+        $this->installationConfig->setOnlyDeps(true);
+        $this->command->info('Skipping component files, checking dependencies...');
+        return null;
+    }
+
+
+    public function handleOverwriteChoice()
+    {
+        if ($this->confirmDestructiveAction()) {
+            $this->installationConfig->setOverwrite(true);
+            $this->command->warn('All component files will be overwritten.');
+            return null;
+        } else {
+            return Command::INVALID;
         }
     }
 
-    public function installInternalDeps(array $deps)
+    public function ensureComponentIsInstalled()
     {
-        $this->components->warn('This component requires internal dependencies to function properly.');
-        $installDependencies = $this->installationConfig->shouldInstallInternalDeps() ? true : confirm(label: 'Install required dependencies?', default: true);
-
-        if (!$installDependencies) {
-            return;
-        }
-
-        $this->components->info('↳ Installing internal dependencies.');
-
-        $installedDependencies = false;
-        foreach ($deps as $dep => $info) {
-            if ($this->shouldInstallDependency($dep, $info)) {
-                $this->componentOutDated = true;
-                $installedDependencies = true;
-                $this->install($dep);
-            }
-        }
-
-        $installationMessage = $installedDependencies ? "All dependencies installed successfully." : "Dependencies are already up to date.";
-        $this->components->info($installationMessage);
-    }
-
-    public function installExternalDeps(array $deps)
-    {
-        $this->components->warn('This component requires external packages to function properly.');
-        $confirmInstall = $this->installationConfig->shouldInstallExternalDeps() ? true : confirm(label: 'Install required external packages?', default: true);
-
-        if (!$confirmInstall) {
-            return;
-        }
-
-        $this->components->info('↳ Installing external dependencies');
-        foreach ($deps as $key => $dep) {
-            $this->components->info("Installing $key...");
-            Process::run($dep[1]);
-        }
-    }
-
-    public function shouldInstallDependency($dependency, $info)
-    {
-        $components = $this->getInstalledComponents();
-
-        if (!array_key_exists($dependency, $components['components'])) {
-            return true;
-        }
-
-        return $components['components'][$dependency]['installationTime'] < $info['lastModified'];
-    }
-
-    public function saveInstalledComponent(string $componentName)
-    {
-        $components = $this->getInstalledComponents();
-
-        $components['components'][$componentName] = [
-            'installationTime' => time()
-        ];
-
-        File::put(base_path('fluxtor.json'), json_encode($components, true));
-    }
-
-    public function getInstalledComponents()
-    {
-        $components = [];
-
-        if (File::exists(base_path('fluxtor.json'))) {
-            $components = json_decode(File::get(base_path('fluxtor.json')), true);
-        }
-
-        return $components;
+        return File::exists(resource_path("views/components/ui/{$this->name}"));
     }
 }
