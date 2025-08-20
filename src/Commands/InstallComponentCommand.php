@@ -6,6 +6,7 @@ use Fluxtor\Cli\Services\ComponentInstaller;
 use Fluxtor\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 use function Laravel\Prompts\text;
 
@@ -17,7 +18,7 @@ class InstallComponentCommand extends Command
      * @var string
      */
     protected $signature = 'fluxtor:install 
-    {name?*           : the name of the component.} 
+    {name?*          : the name of the component.} 
     {--force         : override the component file if it exist.} 
     {--skip-deps     : Skip Dependency Installation.}
     {--only-deps     : Install Only Dependency.}
@@ -39,23 +40,26 @@ class InstallComponentCommand extends Command
     {
 
         $componentNames = $this->getComponentName();
+        $installationConfig = new InstallationConfig(
+            force: $this->option("force"),
+            skipDeps: $this->option("skip-deps"),
+            onlyDeps: $this->option("only-deps"),
+            internalDeps: $this->option("internal-deps"),
+            externalDeps: $this->option("external-deps"),
+            isDryRun: $this->option("dry-run")
+        );
 
         foreach ($componentNames as $name) {
-            $this->banner($name);
+            $title = $this->getBannerTitle($name);
+            
+            $this->banner($title);
+            $installationConfig->setComponentName($name);
+            
+            $result = (new ComponentInstaller($this, $this->components, $installationConfig))->install($name);
 
-            $installationConfig = new InstallationConfig(
-                name: $name,
-                force: $this->option("force"),
-                skipDeps: $this->option("skip-deps"),
-                onlyDeps: $this->option("only-deps"),
-                internalDeps: $this->option("internal-deps"),
-                externalDeps: $this->option("external-deps"),
-                isDryRun: $this->option("dry-run")
-            );
-
-            (new ComponentInstaller($this, $this->components, $installationConfig))->install($name);
-
-            $this->components->info("Full documentation: https://fluxtor.dev/docs/components/{$installationConfig->componentName()}");
+            if ($result === Command::SUCCESS) {
+                $this->components->info("Full documentation: https://fluxtor.dev/docs/components/{$installationConfig->componentName()}");
+            }
         }
     }
 
@@ -73,12 +77,35 @@ class InstallComponentCommand extends Command
 
     public function banner(string $title): void
     {
-        $length = strlen("  Installing:  <info>{$title}</info>") + 4;
+        $length = strlen("  {$title}") + 4;
 
         $this->newLine();
         $this->line(str_repeat("═", $length));
-        $this->line("  Installing:  <info>{$title}</info>");
+        $this->line("  {$title}");
         $this->line(str_repeat("═", $length));
         $this->newLine();
+    }
+
+    public function getBannerTitle(string $title)
+    {
+        $formattedTitle = Str::of($title)->headline();
+        
+        if ($this->option('only-deps')) {
+            return "Installing {$formattedTitle} Dependencies Only";
+        }
+        
+        if ($this->option('dry-run')) {
+            return "Preview: Installing {$formattedTitle} (Dry Run)";
+        }
+        
+        if ($this->option('skip-deps')) {
+            return "Installing {$formattedTitle} Files Only";
+        }
+        
+        if ($this->option('force')) {
+            return "Installing {$formattedTitle} (Force Mode)";
+        }
+        
+        return "Installing {$formattedTitle}";
     }
 }
