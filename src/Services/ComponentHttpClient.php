@@ -21,17 +21,11 @@ class ComponentHttpClient
         $isComponentFree = $this->isComponentFree($componentName);
 
         if (!$isComponentFree['success']) {
-            return [
-                'message' => $isComponentFree['message'],
-                'success' => false
-            ];
+            throw new Exception($isComponentFree['message']);
         }
 
         if (!$isComponentFree['isFree'] && !$this->token) {
-            return [
-                'message' => "You need to login, Please run 'php artisan fluxtor:login' and login with your fluxtor account.",
-                'success' => false
-            ];
+            throw new Exception("You need to login, Please run 'php artisan fluxtor:login' and login with your fluxtor account.");
         }
 
         $response =  Http::asJson()
@@ -42,10 +36,7 @@ class ComponentHttpClient
             $component = Str::of($componentName)->headline();
             $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
 
-            return [
-                'message' => "Failed to install the component '$component'. \n $message",
-                'success' => false
-            ];
+            throw new Exception("Failed to install the component '$component'. \n $message");
         }
 
         return [
@@ -58,7 +49,7 @@ class ComponentHttpClient
     {
         $response = Http::get("{$this->url}/api/cli/components/$componentName/is-free");
 
-        if($response->failed()) {
+        if ($response->failed()) {
             $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
             throw new Exception("Failed to get the data. {$message}");
         }
