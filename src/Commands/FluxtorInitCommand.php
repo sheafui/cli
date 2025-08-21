@@ -10,11 +10,7 @@ use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\text;
 
 
-/**
- * todo:
- * add livewire option.
- * if it does, using the livewire starter kit (stup/livewire)
- */
+
 class FluxtorInitCommand extends Command
 {
     /**
