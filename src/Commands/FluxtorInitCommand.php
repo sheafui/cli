@@ -46,7 +46,6 @@ class FluxtorInitCommand extends Command
             enableDarkMode: $configuration['dark_mode'],
             targetCssFile: $configuration['css_file'],
             themeFileName: $configuration['theme_file'],
-            jsDirectory: $configuration['js-dir'] ?? null,
             forceOverwrite: $this->option('force')
         );
 
@@ -79,9 +78,6 @@ class FluxtorInitCommand extends Command
             'theme_file' => $this->determineThemeFileName(),
         ];
 
-        if ($config['dark_mode']) {
-            $config['js-dir'] = $this->determineJsDirectory();
-        }
 
         return $config;
     }
@@ -96,7 +92,6 @@ class FluxtorInitCommand extends Command
             'dark_mode' => $this->option('with-dark-mode'),
             'css_file' => $this->option('css-file'),
             'theme_file' => $this->option('theme-file'),
-            'js-dir' => $this->option('js-dir'),
         ];
     }
 
@@ -184,42 +179,6 @@ class FluxtorInitCommand extends Command
         return null;
     }
 
-    /**
-     * Determine the JavaScript directory path
-     */
-    protected function determineJsDirectory(): string
-    {
-        $defaultDir = $this->option('js-dir');
-
-        return text(
-            label: 'JavaScript files directory path',
-            placeholder: $defaultDir,
-            default: $defaultDir,
-            hint: 'Directory path relative to resources/js/ for Fluxtor JavaScript utilities',
-            validate: fn($input) => $this->validateJsDirectory($input)
-        );
-    }
-
-    /**
-     * Validate JavaScript directory input
-     */
-    protected function validateJsDirectory(?string $input): ?string
-    {
-        if (empty($input)) {
-            return 'JavaScript directory path cannot be empty';
-        }
-
-        if (!preg_match('/^[a-zA-Z0-9_\/-]+$/', $input)) {
-            return 'Directory path can only contain letters, numbers, hyphens, underscores, and forward slashes';
-        }
-
-        // Prevent absolute paths
-        if (str_starts_with($input, '/') || str_contains($input, '..')) {
-            return 'Please use a relative directory path without leading slash or parent directory references';
-        }
-
-        return null;
-    }
 
     /**
      * Display the Fluxtor package banner
@@ -252,7 +211,6 @@ class FluxtorInitCommand extends Command
         $this->line("  • Main CSS file: <fg=yellow>{$configuration['css_file']}</fg=yellow>");
         $this->line("  • Theme file: <fg=yellow>{$configuration['theme_file']}</fg=yellow>");
         if ($configuration['dark_mode']) {
-            $this->line("  • JS Directory: <fg=yellow>{$configuration['js-dir']}</fg=yellow>");
             $this->line("  • JS files: <fg=yellow>utils.js and globals/theme.js</fg=yellow>");
         }
         $this->line('  • Dark mode support: ' . ($configuration['dark_mode'] ? '<fg=green>✓ Enabled</fg=green>' : '<fg=red>✗ Disabled</fg=red>'));
