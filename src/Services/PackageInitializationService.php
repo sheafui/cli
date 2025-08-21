@@ -20,7 +20,6 @@ class PackageInitializationService
         protected $enableDarkMode = false,
         protected $themeFileName,
         protected $targetCssFile,
-        protected string|null $jsDirectory,
         protected bool $forceOverwrite,
     ) {
         $this->contentTemplateService = new ContentTemplateService();
@@ -41,7 +40,7 @@ class PackageInitializationService
 
             if ($this->enableDarkMode) {
 
-                (new JavaScriptAssetService($this->command, $this->jsDirectory, $this->forceOverwrite))->createDarkModeAssets();
+                (new JavaScriptAssetService($this->command, $this->forceOverwrite))->createDarkModeAssets();
             }
 
             return true;
@@ -78,7 +77,7 @@ class PackageInitializationService
     {
         $isUsingLivewire = confirm(
             label: "Will this project use Livewire?",
-            default: false,
+            default: true,
             hint: "Choose 'yes' if your project is using Livewire v3."
         );
 
@@ -157,10 +156,6 @@ class PackageInitializationService
 
         if (empty($this->targetCssFile)) {
             throw new Exception('Target CSS file name cannot be empty');
-        }
-
-        if ($this->enableDarkMode && empty($this->jsDirectory)) {
-            throw new Exception('JavaScript directory is required when dark mode is enabled');
         }
 
         // Ensure file names have proper extensions
