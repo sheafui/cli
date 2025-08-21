@@ -9,16 +9,12 @@ use function Laravel\Prompts\text;
 
 class JavaScriptAssetService
 {
-    protected Command $command;
     protected ContentTemplateService $contentTemplateService;
-    protected string $jsDirectory;
-    protected bool $forceOverwrite;
 
-    public function __construct(Command $command, string $jsDirectory, bool $forceOverwrite = false)
-    {
-        $this->command = $command;
-        $this->jsDirectory = $jsDirectory;
-        $this->forceOverwrite = $forceOverwrite;
+    public function __construct(
+        protected Command $command,
+        protected bool $forceOverwrite = false
+    ) {
         $this->contentTemplateService = new ContentTemplateService();
     }
 
@@ -62,6 +58,7 @@ class JavaScriptAssetService
         }
 
         $content = $this->contentTemplateService->getStubContent('utils.js');
+        
         File::put($path, $content);
 
         $this->command->info("✓ Created: resources/js/utils.js");
@@ -95,17 +92,12 @@ class JavaScriptAssetService
      */
     protected function ensureDirectoryStructure(): void
     {
-        $baseDir = resource_path("js");
+        $baseDir = resource_path('js');
         $globalsDir = "{$baseDir}/globals";
-
-        if (!File::exists($baseDir)) {
-            File::makeDirectory($baseDir, 0755, true);
-            $this->command->info("Created directory: resources/js");
-        }
 
         if (!File::exists($globalsDir)) {
             File::makeDirectory($globalsDir, 0755, true);
-            $this->command->info("Created directory: resources/js/globals");
+            $this->command->info('Created directory: resources/js/globals');
         }
     }
 
@@ -133,7 +125,7 @@ class JavaScriptAssetService
     {
         $file = 'app.js';
         $path = resource_path("js/$file");
-        
+
         if (!File::exists($path)) {
             $file = text(
                 label: "Target Js File for dark mode integration.",
@@ -159,5 +151,4 @@ class JavaScriptAssetService
 
         $this->command->info("Added import statement to: {$file}");
     }
-
 }
