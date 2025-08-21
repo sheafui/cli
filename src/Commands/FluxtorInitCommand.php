@@ -3,10 +3,13 @@
 namespace Fluxtor\Cli\Commands;
 
 use Fluxtor\Cli\Services\PackageInitializationService;
+use Fluxtor\Cli\Support\InitializationConfig;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\text;
+
+
 
 class FluxtorInitCommand extends Command
 {
@@ -16,13 +19,13 @@ class FluxtorInitCommand extends Command
      * @var string
      */
     protected $signature = 'fluxtor:init 
-                            {--with-dark-mode : Include dark mode theme variables and utilities} 
-                            {--with-phosphor : Install and configure Phosphor Icons package}
-                            {--css-file=app.css : Target CSS file name for package assets injection (relative to resources/css/)}
+                            {--with-dark-mode       : Include dark mode theme variables and utilities} 
+                            {--with-livewire        : Install and setup livewire} 
+                            {--with-phosphor        : Install and configure Phosphor Icons package}
+                            {--css-file=app.css     : Target CSS file name for package assets injection (relative to resources/css/)}
                             {--theme-file=theme.css : Name for the generated theme CSS file (relative to resources/css/)}
-                            {--js-dir=fluxtor : Directory path for JavaScript files (relative to resources/js/)}
-                            {--skip-prompts : Skip interactive prompts and use default configuration}
-                            {--force : Force overwrite existing files and configurations}';
+                            {--skip-prompts         : Skip interactive prompts and use default configuration}
+                            {--force                : Force overwrite existing files and configurations}';
 
     /**
      * The console command description.
@@ -40,16 +43,21 @@ class FluxtorInitCommand extends Command
 
         $configuration = $this->gatherConfiguration();
 
-        $packageService = new PackageInitializationService(
-            command: $this,
+        $initConfig = new InitializationConfig(
             enablePhosphorIcons: $configuration['phosphor_icons'],
             enableDarkMode: $configuration['dark_mode'],
             targetCssFile: $configuration['css_file'],
             themeFileName: $configuration['theme_file'],
+            isUseLivewire: $configuration['livewire'],
             forceOverwrite: $this->option('force')
         );
 
-        $this->info('Initializing Fluxtor package...');
+        $packageService = new PackageInitializationService(
+            command: $this,
+            initConfig: $initConfig
+        );
+
+        $this->heading();
 
         $result = $packageService->initializePackage();
 
@@ -73,6 +81,7 @@ class FluxtorInitCommand extends Command
 
         $config = [
             'phosphor_icons' => $this->determinePhosphorIconsInstallation(),
+            'livewire' => $this->determineLivewireSetup(),
             'dark_mode' => $this->determineDarkModeSetup(),
             'css_file' => $this->determineCssFileName(),
             'theme_file' => $this->determineThemeFileName(),
@@ -89,10 +98,27 @@ class FluxtorInitCommand extends Command
     {
         return [
             'phosphor_icons' => $this->option('with-phosphor'),
+            'livewire' => $this->option('with-livewire'),
             'dark_mode' => $this->option('with-dark-mode'),
             'css_file' => $this->option('css-file'),
             'theme_file' => $this->option('theme-file'),
         ];
+    }
+
+    /**
+     * Determine whether to install livewire
+     */
+    protected function determineLivewireSetup()
+    {
+        if ($this->option("with-livewire")) {
+            return true;
+        }
+
+        return confirm(
+            label: 'Install and setup livewire?',
+            default: true,
+            hint: "Choose Yes to enable Livewire support, or No if you only use Alpine."
+        );
     }
 
     /**
@@ -154,7 +180,7 @@ class FluxtorInitCommand extends Command
             label: 'Theme CSS file name',
             placeholder: $defaultName,
             default: $defaultName,
-            hint: 'Generated Fluxtor theme file will be saved as {name}.css',
+            hint: 'Generated Fluxtor theme file.',
             validate: fn($input) => $this->validateCssFileName($input)
         );
     }
@@ -183,7 +209,7 @@ class FluxtorInitCommand extends Command
     /**
      * Display the Fluxtor package banner
      */
-    protected function displayBanner(): void
+    protected function  displayBanner(): void
     {
         $this->newLine();
         $this->line('  <fg=blue>███████╗██╗     ██╗   ██╗██╗  ██╗████████╗ ██████╗ ██████╗ </>');
@@ -204,7 +230,7 @@ class FluxtorInitCommand extends Command
     protected function displaySuccess(array $configuration): void
     {
         $this->newLine();
-        $this->info('🎉 Fluxtor package initialized successfully!');
+        $this->line(' Fluxtor initialized successfully!');
         $this->newLine();
 
         $this->line('<fg=green>Package Configuration:</fg=green>');
@@ -212,6 +238,11 @@ class FluxtorInitCommand extends Command
         $this->line("  • Theme file: <fg=yellow>{$configuration['theme_file']}</fg=yellow>");
         if ($configuration['dark_mode']) {
             $this->line("  • JS files: <fg=yellow>utils.js and globals/theme.js</fg=yellow>");
+        }
+        if ($configuration['livewire']) {
+            $this->line("  • Livewire: <fg=yellow>✓ Installed and configured</fg=yellow>");
+        } else {
+            $this->line("  • Alpine: <fg=yellow>✓ Installed and configured</fg=yellow>");
         }
         $this->line('  • Dark mode support: ' . ($configuration['dark_mode'] ? '<fg=green>✓ Enabled</fg=green>' : '<fg=red>✗ Disabled</fg=red>'));
         $this->line('  • Phosphor Icons: ' . ($configuration['phosphor_icons'] ? '<fg=green>✓ Installed</fg=green>' : '<fg=red>✗ Skipped</fg=red>'));
@@ -222,5 +253,18 @@ class FluxtorInitCommand extends Command
         $this->line('  • Utility classes and component styles');
         $this->line('  • Laravel Blade components integration');
         $this->line('  • Asset compilation configuration');
+    }
+
+    private function heading()
+    {
+        $heading = 'Initializing Fluxtor...';
+
+        $length = strlen("  {$heading}") + 4;
+
+        $this->newLine();
+        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>" );
+        $this->line("   <fg=green>" . "  {$heading}" . "</fg=green>" );
+        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>" );
+        $this->newLine();
     }
 }
