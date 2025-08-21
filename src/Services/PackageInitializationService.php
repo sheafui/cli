@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\spin;
 use function Laravel\Prompts\text;
 
 class PackageInitializationService
@@ -63,9 +64,11 @@ class PackageInitializationService
             if ($this->isComposerPackageInstalled($package)) {
                 continue;
             }
-
-            $this->command->info("Installing $package...");
-            $result = Process::run("composer require $package");
+            
+            $result = spin(
+                callback: fn () => Process::run("composer require $package"),
+                message: "Installing $package..."
+            );
 
             if ($result->failed()) {
                 $this->command->error("Failed to install $package -" . $result->errorOutput());
