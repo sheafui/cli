@@ -183,7 +183,7 @@ class FluxtorInitCommand extends Command
     /**
      * Display the Fluxtor package banner
      */
-    protected function displayBanner(): void
+    protected function  displayBanner(): void
     {
         $this->newLine();
         $this->line('  <fg=blue>███████╗██╗     ██╗   ██╗██╗  ██╗████████╗ ██████╗ ██████╗ </>');
