@@ -2,9 +2,12 @@
 
 namespace Fluxtor\Cli\Services;
 
+use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Process;
 
+use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\text;
 
 class JavaScriptAssetService
@@ -13,7 +16,8 @@ class JavaScriptAssetService
 
     public function __construct(
         protected Command $command,
-        protected bool $forceOverwrite = false
+        protected bool $forceOverwrite = false,
+        protected bool $shouldSetupLivewire = false
     ) {
         $this->contentTemplateService = new ContentTemplateService();
     }
@@ -43,6 +47,76 @@ class JavaScriptAssetService
     }
 
     /**
+     * Set up the app.js file
+     */
+    public function setupAppJs()
+    {
+        if ($this->shouldSetupLivewire) {
+            $this->SetupLivewire();
+            return;
+        }
+
+        $this->installAndSetupAlpine();
+    }
+
+    public function installAndSetupAlpine()
+    {
+        if (!$this->isNpmPackageInstalled('alpinejs')) {
+            $needsAlpine = confirm(
+                label: "Alpine.js is not installed. Would you like to install it now?",
+                default: true,
+                hint: "Alpine.js is required for interactive components. Skipping may cause some features to break."
+            );
+
+            if (!$needsAlpine) {
+                $this->command->warn("Alpine.js installation skipped. Some UI components may not function correctly.");
+                return;
+            }
+
+            $this->command->info("Installing Alpinejs...");
+            $result = Process::run("npm install alpinejs @alpinejs/anchor");
+
+            if ($result->failed()) {
+                $this->command->error("Failed to install Alpine.js. {$result->errorOutput()}");
+                return;
+            }
+        }
+
+        $appJsPath = $this->getMainJsFilePath();
+
+        $appJsContent = File::get($appJsPath);
+
+        if ($this->isAlpineAlreadyImported($appJsContent)) {
+            return;
+        }
+
+        $alpineInitialize = $this->contentTemplateService->getStubContent('alpinejs');
+
+        $newContent = $appJsContent . $alpineInitialize;
+
+        File::put($appJsPath, $newContent);
+    }
+
+    /**
+     * Set up livewire scripts
+     */
+    public function SetupLivewire()
+    {
+        $appJsPath = $this->getMainJsFilePath();
+        $appJsContent = File::get($appJsPath);
+
+        if (preg_match('/import\s+{[^}]*\bLivewire\b[^}]*\bAlpine\b[^}]*}/i', $appJsContent)) {
+            return;
+        }
+
+        $livewireStarterKit = $this->contentTemplateService->getStubContent('livewirejs');
+
+        $newContent = $appJsContent . $livewireStarterKit;
+
+        File::put($appJsPath, $newContent);
+    }
+
+    /**
      * Create utils.js file
      */
     protected function createUtilsFile(): bool
@@ -58,7 +132,7 @@ class JavaScriptAssetService
         }
 
         $content = $this->contentTemplateService->getStubContent('utils.js');
-        
+
         File::put($path, $content);
 
         $this->command->info("✓ Created: resources/js/utils.js");
@@ -124,31 +198,78 @@ class JavaScriptAssetService
     protected function addImportToAppJsFile(): void
     {
         $file = 'app.js';
-        $path = resource_path("js/$file");
-
-        if (!File::exists($path)) {
-            $file = text(
-                label: "Target Js File for dark mode integration.",
-                placeholder: 'app.js',
-                hint: "File path relative to resources/js directory where Fluxtor assets will be injected."
-            );
-        }
+        $path = $this->getMainJsFilePath();
 
         $content = File::get($path);
 
         // Check if import already exists
-        if (strpos($content, "import './globals/theme.js'") === false) {
+        if (!preg_match('/^import\s+[\'"]\.\/globals\/theme\.js[\'"]/', $content)) {
             $importStatement = "import './globals/theme.js'; /* By Fluxtor.dev */ \n\n";
-            $content = $importStatement . $content;
-        }
-
-        if (strpos($content, "import './utils.js'") === false) {
-            $importStatement = "import './utils.js'; /* By Fluxtor.dev */ \n\n";
             $content = $importStatement . $content;
         }
 
         File::put($path, $content);
 
         $this->command->info("Added import statement to: {$file}");
+    }
+
+    public function getMainJsFilePath()
+    {
+        $path = resource_path('/js/app.js');
+        if (!File::exists($path)) {
+            $path = text(
+                label: "Enter the path (relative to resources/) to your main JS file:",
+                placeholder: '/js/app.js'
+            );
+        }
+
+        if (! File::exists($path)) {
+            throw new Exception("The file '{$path}' does not exist in resources/. Please create it or specify the correct path.");
+        }
+
+        return $path;
+    }
+
+    /**
+     * Check if Alpine.js is already imported
+     */
+    protected function isAlpineAlreadyImported(string $content): bool
+    {
+        $patterns = [
+            '/import\s+.*alpine/i',
+            '/require\s*\(\s*[\'"]alpine/i',
+            '/from\s+[\'"]alpinejs[\'"]/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $content)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isNpmPackageInstalled($packageName)
+    {
+        $packageJsonPath = base_path('package.json');
+
+        if (!file_exists($packageJsonPath)) {
+            return false;
+        }
+
+        $packageJson = json_decode(File::get($packageJsonPath), true);
+
+        // Check in dependencies
+        if (isset($packageJson['dependencies'][$packageName])) {
+            return true;
+        }
+
+        // Check in devDependencies
+        if (isset($packageJson['devDependencies'][$packageName])) {
+            return true;
+        }
+
+        return false;
     }
 }

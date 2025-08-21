@@ -3,11 +3,18 @@
 namespace Fluxtor\Cli\Commands;
 
 use Fluxtor\Cli\Services\PackageInitializationService;
+use Fluxtor\Cli\Support\InitializationConfig;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\text;
 
+
+/**
+ * todo:
+ * add livewire option.
+ * if it does, using the livewire starter kit (stup/livewire)
+ */
 class FluxtorInitCommand extends Command
 {
     /**
@@ -16,13 +23,13 @@ class FluxtorInitCommand extends Command
      * @var string
      */
     protected $signature = 'fluxtor:init 
-                            {--with-dark-mode : Include dark mode theme variables and utilities} 
-                            {--with-phosphor : Install and configure Phosphor Icons package}
-                            {--css-file=app.css : Target CSS file name for package assets injection (relative to resources/css/)}
+                            {--with-dark-mode       : Include dark mode theme variables and utilities} 
+                            {--with-livewire        : Install and setup livewire} 
+                            {--with-phosphor        : Install and configure Phosphor Icons package}
+                            {--css-file=app.css     : Target CSS file name for package assets injection (relative to resources/css/)}
                             {--theme-file=theme.css : Name for the generated theme CSS file (relative to resources/css/)}
-                            {--js-dir=fluxtor : Directory path for JavaScript files (relative to resources/js/)}
-                            {--skip-prompts : Skip interactive prompts and use default configuration}
-                            {--force : Force overwrite existing files and configurations}';
+                            {--skip-prompts         : Skip interactive prompts and use default configuration}
+                            {--force                : Force overwrite existing files and configurations}';
 
     /**
      * The console command description.
@@ -40,13 +47,18 @@ class FluxtorInitCommand extends Command
 
         $configuration = $this->gatherConfiguration();
 
-        $packageService = new PackageInitializationService(
-            command: $this,
+        $initConfig = new InitializationConfig(
             enablePhosphorIcons: $configuration['phosphor_icons'],
             enableDarkMode: $configuration['dark_mode'],
             targetCssFile: $configuration['css_file'],
             themeFileName: $configuration['theme_file'],
+            isUseLivewire: $configuration['livewire'],
             forceOverwrite: $this->option('force')
+        );
+        
+        $packageService = new PackageInitializationService(
+            command: $this,
+            initConfig: $initConfig
         );
 
         $this->info('Initializing Fluxtor package...');
@@ -76,6 +88,7 @@ class FluxtorInitCommand extends Command
             'dark_mode' => $this->determineDarkModeSetup(),
             'css_file' => $this->determineCssFileName(),
             'theme_file' => $this->determineThemeFileName(),
+            'livewire' => $this->determineLivewireSetup(),
         ];
 
 
@@ -92,7 +105,23 @@ class FluxtorInitCommand extends Command
             'dark_mode' => $this->option('with-dark-mode'),
             'css_file' => $this->option('css-file'),
             'theme_file' => $this->option('theme-file'),
+            'livewire' => $this->option('with-livewire'),
         ];
+    }
+
+    /**
+     * Determine whether to install livewire
+     */
+    protected function determineLivewireSetup()
+    {
+        if($this->option("with-livewire")) {
+            return true;
+        }
+
+        return confirm(
+            label: 'Install and setup livewire?',
+            default: false,
+        );
     }
 
     /**
