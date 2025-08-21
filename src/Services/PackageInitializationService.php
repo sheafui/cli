@@ -35,13 +35,13 @@ class PackageInitializationService
                 forceOverwrite: $this->initConfig->shouldForceOverwrite(),
                 shouldSetupLivewire: $this->initConfig->shouldSetupLivewire()
             );
-            
+
             $this->installComposerDependencies();
-            
+
             $javascriptAssets->setupAppJs();
-            
+
             $this->createCssThemeFile();
-            
+
             if ($this->initConfig->shouldEnableDarkMode()) {
                 $javascriptAssets->createDarkModeAssets();
             }
@@ -78,10 +78,12 @@ class PackageInitializationService
 
             if ($result->failed()) {
                 $this->command->error("Failed to install $package -" . $result->errorOutput());
+            } else {
+                $this->command->line("<fg=green>✓ $package Installed.</fg=green>");
             }
         }
     }
-    
+
     /**
      * Create a theme.css file and import it
      */
@@ -95,7 +97,7 @@ class PackageInitializationService
         $themeContent = $this->contentTemplateService->generateThemeCss($this->initConfig->shouldEnableDarkMode());
 
         File::put($themeFile, $themeContent);
-        $this->command->info('Created theme file: ' . $themeFile);
+        $this->command->info('✓ Created theme file: ' . $themeFile);
 
         // Add import to main CSS file if it exists
         if (File::exists($appCssFile)) {
@@ -133,18 +135,18 @@ class PackageInitializationService
 
         // Check if import already exists
         if (
-            strpos($content, "@import './{$this->initConfig->getThemeFileName()}'") !== false
+            strpos($content, "@import './{$this->initConfig->getThemeFileName()}'") === false
         ) {
-            $this->command->info('Import statement already exists in main CSS file.');
-            return;
+            // Add import at the beginning
+            $importStatement = "@import './{$this->initConfig->getThemeFileName()}'; /* By Fluxtor.dev */ \n";
+            $newContent = $importStatement . $content;
         }
 
-        // Add import at the beginning
-        $importStatement = "@import './{$this->initConfig->getThemeFileName()}'; /* By Fluxtor.dev */ \n";
-        $newContent = $importStatement . $content;
+        if (strpos($content, '@custom-variant') === false) {
+            $newContent .= "\n\n @custom-variant dark (&:where(.dark, .dark *)); /* By Fluxtor.dev */ \n";
+        }
 
         File::put($path, $newContent);
-        $this->command->info("Added import statement to: {$path}");
     }
 
     public function isComposerPackageInstalled($packageName)

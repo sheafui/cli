@@ -55,13 +55,13 @@ class FluxtorInitCommand extends Command
             isUseLivewire: $configuration['livewire'],
             forceOverwrite: $this->option('force')
         );
-        
+
         $packageService = new PackageInitializationService(
             command: $this,
             initConfig: $initConfig
         );
 
-        $this->info('Initializing Fluxtor package...');
+        $this->heading();
 
         $result = $packageService->initializePackage();
 
@@ -85,10 +85,10 @@ class FluxtorInitCommand extends Command
 
         $config = [
             'phosphor_icons' => $this->determinePhosphorIconsInstallation(),
+            'livewire' => $this->determineLivewireSetup(),
             'dark_mode' => $this->determineDarkModeSetup(),
             'css_file' => $this->determineCssFileName(),
             'theme_file' => $this->determineThemeFileName(),
-            'livewire' => $this->determineLivewireSetup(),
         ];
 
 
@@ -102,10 +102,10 @@ class FluxtorInitCommand extends Command
     {
         return [
             'phosphor_icons' => $this->option('with-phosphor'),
+            'livewire' => $this->option('with-livewire'),
             'dark_mode' => $this->option('with-dark-mode'),
             'css_file' => $this->option('css-file'),
             'theme_file' => $this->option('theme-file'),
-            'livewire' => $this->option('with-livewire'),
         ];
     }
 
@@ -114,13 +114,14 @@ class FluxtorInitCommand extends Command
      */
     protected function determineLivewireSetup()
     {
-        if($this->option("with-livewire")) {
+        if ($this->option("with-livewire")) {
             return true;
         }
 
         return confirm(
             label: 'Install and setup livewire?',
-            default: false,
+            default: true,
+            hint: "Choose Yes to enable Livewire support, or No if you only use Alpine."
         );
     }
 
@@ -183,7 +184,7 @@ class FluxtorInitCommand extends Command
             label: 'Theme CSS file name',
             placeholder: $defaultName,
             default: $defaultName,
-            hint: 'Generated Fluxtor theme file will be saved as {name}.css',
+            hint: 'Generated Fluxtor theme file.',
             validate: fn($input) => $this->validateCssFileName($input)
         );
     }
@@ -233,7 +234,7 @@ class FluxtorInitCommand extends Command
     protected function displaySuccess(array $configuration): void
     {
         $this->newLine();
-        $this->info('🎉 Fluxtor package initialized successfully!');
+        $this->line(' Fluxtor initialized successfully!');
         $this->newLine();
 
         $this->line('<fg=green>Package Configuration:</fg=green>');
@@ -241,6 +242,11 @@ class FluxtorInitCommand extends Command
         $this->line("  • Theme file: <fg=yellow>{$configuration['theme_file']}</fg=yellow>");
         if ($configuration['dark_mode']) {
             $this->line("  • JS files: <fg=yellow>utils.js and globals/theme.js</fg=yellow>");
+        }
+        if ($configuration['livewire']) {
+            $this->line("  • Livewire: <fg=yellow>✓ Installed and configured</fg=yellow>");
+        } else {
+            $this->line("  • Alpine: <fg=yellow>✓ Installed and configured</fg=yellow>");
         }
         $this->line('  • Dark mode support: ' . ($configuration['dark_mode'] ? '<fg=green>✓ Enabled</fg=green>' : '<fg=red>✗ Disabled</fg=red>'));
         $this->line('  • Phosphor Icons: ' . ($configuration['phosphor_icons'] ? '<fg=green>✓ Installed</fg=green>' : '<fg=red>✗ Skipped</fg=red>'));
@@ -251,5 +257,18 @@ class FluxtorInitCommand extends Command
         $this->line('  • Utility classes and component styles');
         $this->line('  • Laravel Blade components integration');
         $this->line('  • Asset compilation configuration');
+    }
+
+    private function heading()
+    {
+        $heading = 'Initializing Fluxtor...';
+
+        $length = strlen("  {$heading}") + 4;
+
+        $this->newLine();
+        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>" );
+        $this->line("   <fg=green>" . "  {$heading}" . "</fg=green>" );
+        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>" );
+        $this->newLine();
     }
 }

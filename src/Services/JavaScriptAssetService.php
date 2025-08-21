@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\spin;
 use function Laravel\Prompts\text;
 
 class JavaScriptAssetService
@@ -62,23 +63,17 @@ class JavaScriptAssetService
     public function installAndSetupAlpine()
     {
         if (!$this->isNpmPackageInstalled('alpinejs')) {
-            $needsAlpine = confirm(
-                label: "Alpine.js is not installed. Would you like to install it now?",
-                default: true,
-                hint: "Alpine.js is required for interactive components. Skipping may cause some features to break."
+
+            $result = spin(
+                callback: fn() => Process::run("npm install alpinejs @alpinejs/anchor"),
+                message: "Installing alpinejs and @alpinejs/anchor..."
             );
-
-            if (!$needsAlpine) {
-                $this->command->warn("Alpine.js installation skipped. Some UI components may not function correctly.");
-                return;
-            }
-
-            $this->command->info("Installing Alpinejs...");
-            $result = Process::run("npm install alpinejs @alpinejs/anchor");
 
             if ($result->failed()) {
                 $this->command->error("Failed to install Alpine.js. {$result->errorOutput()}");
                 return;
+            } else {
+                $this->command->line("<fg=green>✓ alpinejs and alpinejs/anchor Installed.</fg=green>");
             }
         }
 
@@ -171,7 +166,7 @@ class JavaScriptAssetService
 
         if (!File::exists($globalsDir)) {
             File::makeDirectory($globalsDir, 0755, true);
-            $this->command->info('Created directory: resources/js/globals');
+            $this->command->info('✓ Created directory: resources/js/globals');
         }
     }
 
@@ -210,7 +205,7 @@ class JavaScriptAssetService
 
         File::put($path, $content);
 
-        $this->command->info("Added import statement to: {$file}");
+        $this->command->line("  ✓ Added import statement to: {$file}");
     }
 
     public function getMainJsFilePath()
