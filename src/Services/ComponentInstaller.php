@@ -9,8 +9,6 @@ use Illuminate\Console\Command;
 class ComponentInstaller
 {
     protected ComponentHttpClient $componentHttpClient;
-    protected FluxtorFileInstaller $fileInstaller;
-    protected DependencyInstaller $dependencyInstaller;
     protected string $name = '';
 
     public function __construct(
@@ -20,13 +18,6 @@ class ComponentInstaller
     ) {
         $this->componentHttpClient = new ComponentHttpClient();
         
-        $this->fileInstaller = new FluxtorFileInstaller($this->installationConfig);
-        
-        $this->dependencyInstaller = new DependencyInstaller(
-            installationConfig: $this->installationConfig,
-            command: $this->command,
-            components: $this->components
-        );
     }
 
     public function install(string $componentName)
@@ -40,8 +31,7 @@ class ComponentInstaller
             $strategy = InstallationStrategyFactory::create(
                 $this->installationConfig,
                 $this->command,
-                $this->fileInstaller,
-                $this->dependencyInstaller,
+                $this->components,
                 $componentName
             );
 

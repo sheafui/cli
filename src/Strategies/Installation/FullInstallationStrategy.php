@@ -4,8 +4,9 @@
 namespace Fluxtor\Cli\Strategies\Installation;
 
 use Fluxtor\Cli\Contracts\BaseInstallationStrategy;
+use Fluxtor\Cli\Traits\CanHandleFilesInstallation;
 use Fluxtor\Cli\Services\FluxtorConfig;
-use Fluxtor\Cli\Traits\DependencyInstaller;
+use Fluxtor\Cli\Traits\CanHandleDependenciesInstallation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -15,31 +16,38 @@ use function Laravel\Prompts\select;
 class FullInstallationStrategy extends BaseInstallationStrategy
 {
 
-    use DependencyInstaller;
-    
+    use CanHandleDependenciesInstallation;
+    use CanHandleFilesInstallation;
+
     public function execute($componentResources): int
     {
 
         $existingChoice = $this->handleExistingComponent();
 
-            if ($existingChoice === Command::INVALID) {
-                $this->command->error(" Cancelled");
-                return Command::INVALID;
-            }
+        if ($existingChoice === Command::INVALID) {
+            $this->command->error(" Cancelled");
+            return Command::INVALID;
+        }
 
-        // $createdFiles = $this->fileInstaller->install($componentResources->get('files'));
+        $createdFiles = $this->installFiles($componentResources->get('files'));
 
         FluxtorConfig::saveInstalledComponent($this->componentName);
 
-        // $this->reportInstallation($createdFiles);
+        $this->reportInstallation($createdFiles);
 
+        $this->runInitialization();
+
+        $this->installDependencies($componentResources->get('dependencies'));
+
+        return Command::SUCCESS;
+    }
+
+    public function runInitialization()
+    {
         $this->initCommand($this->command);
         $this->initConsoleComponent($this->consoleComponent);
         $this->initInstallationConfig($this->installationConfig);
-
-        $this->installDependencies($componentResources->get('dependencies'));
-        
-        return Command::SUCCESS;
+        $this->initInstallationConfigForFilesInstallation($this->installationConfig);
     }
 
     private function reportInstallation(array $createdFiles): void

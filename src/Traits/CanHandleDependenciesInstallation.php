@@ -6,22 +6,19 @@ use Fluxtor\Cli\Services\ComponentInstaller;
 use Fluxtor\Cli\Services\FluxtorConfig;
 use Fluxtor\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
-use Illuminate\Console\View\Components\Component;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\confirm;
 
-trait DependencyInstaller
+trait CanHandleDependenciesInstallation
 {
-    // public function __construct(protected InstallationConfig $installationConfig, protected Command $command, 
-    // protected $components) {}
 
     protected InstallationConfig $installationConfig;
-    protected Component $consoleComponent;
+    protected $consoleComponent;
     protected Command $command;
 
-    public function initConsoleComponent(Component $consoleComponent)
+    public function initConsoleComponent($consoleComponent)
     {
         $this->consoleComponent = $consoleComponent;
     }

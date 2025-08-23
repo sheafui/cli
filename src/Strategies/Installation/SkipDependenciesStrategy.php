@@ -4,8 +4,8 @@
 namespace Fluxtor\Cli\Strategies\Installation;
 
 use Fluxtor\Cli\Contracts\BaseInstallationStrategy;
+use Fluxtor\Cli\Traits\CanHandleFilesInstallation;
 use Fluxtor\Cli\Services\FluxtorConfig;
-use Fluxtor\Cli\Services\FluxtorFileInstaller;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -14,7 +14,7 @@ use function Laravel\Prompts\select;
 
 class SkipDependenciesStrategy extends BaseInstallationStrategy
 {
-
+    use CanHandleFilesInstallation;
 
     public function execute($componentResources): int
     {
@@ -26,7 +26,7 @@ class SkipDependenciesStrategy extends BaseInstallationStrategy
                 return Command::INVALID;
             }
 
-        $createdFiles = $this->fileInstaller->install($componentResources->get('files'));
+        $createdFiles = $this->installFiles($componentResources->get('files'));
 
         FluxtorConfig::saveInstalledComponent($this->componentName);
 
