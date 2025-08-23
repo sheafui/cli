@@ -5,18 +5,17 @@ namespace Fluxtor\Cli\Strategies\Installation;
 
 use Fluxtor\Cli\Contracts\BaseInstallationStrategy;
 use Fluxtor\Cli\Services\FluxtorConfig;
-use Fluxtor\Cli\Traits\DependencyInstaller;
+use Fluxtor\Cli\Services\FluxtorFileInstaller;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
 
-class FullInstallationStrategy extends BaseInstallationStrategy
+class SkipDependenciesStrategy extends BaseInstallationStrategy
 {
 
-    use DependencyInstaller;
-    
+
     public function execute($componentResources): int
     {
 
@@ -27,17 +26,11 @@ class FullInstallationStrategy extends BaseInstallationStrategy
                 return Command::INVALID;
             }
 
-        // $createdFiles = $this->fileInstaller->install($componentResources->get('files'));
+        $createdFiles = $this->fileInstaller->install($componentResources->get('files'));
 
         FluxtorConfig::saveInstalledComponent($this->componentName);
 
-        // $this->reportInstallation($createdFiles);
-
-        $this->initCommand($this->command);
-        $this->initConsoleComponent($this->consoleComponent);
-        $this->initInstallationConfig($this->installationConfig);
-
-        $this->installDependencies($componentResources->get('dependencies'));
+        $this->reportInstallation($createdFiles);
         
         return Command::SUCCESS;
     }
@@ -64,7 +57,7 @@ class FullInstallationStrategy extends BaseInstallationStrategy
             return;
         }
 
-        $name = $this->installationConfig->componentHeadlineName(); // Assuming you have this method
+        $name = $this->installationConfig->componentHeadlineName();
 
         $choice = select(
             label: "Component '{$name}' already exists. What would you like to do?",

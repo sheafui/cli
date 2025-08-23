@@ -51,10 +51,10 @@ class InstallComponentCommand extends Command
 
         foreach ($componentNames as $name) {
             $title = $this->getBannerTitle($name);
-            
+
             $this->banner($title);
             $installationConfig->setComponentName($name);
-            
+
             $result = (new ComponentInstaller($this, $this->components, $installationConfig))->install($name);
 
             if ($result === Command::SUCCESS) {
@@ -69,8 +69,9 @@ class InstallComponentCommand extends Command
 
 
         if (!$componentName) {
-            $componentName = text(label: 'Type the component name', placeholder: 'button', required: true);
+            $componentName = text(label: 'What are the component(s) you would like to install or update?', placeholder: 'button', required: true);
         }
+
 
         return Arr::wrap($componentName);
     }
@@ -89,23 +90,13 @@ class InstallComponentCommand extends Command
     public function getBannerTitle(string $title)
     {
         $formattedTitle = Str::of($title)->headline();
-        
-        if ($this->option('only-deps')) {
-            return "Installing {$formattedTitle} Dependencies Only";
-        }
-        
-        if ($this->option('dry-run')) {
-            return "Preview: Installing {$formattedTitle} (Dry Run)";
-        }
-        
-        if ($this->option('skip-deps')) {
-            return "Installing {$formattedTitle} Files Only";
-        }
-        
-        if ($this->option('force')) {
-            return "Installing {$formattedTitle} (Force Mode)";
-        }
-        
-        return "Installing {$formattedTitle}";
+
+        return match (true) {
+            $this->option('only-deps') => "Installing {$formattedTitle} Dependencies Only",
+            $this->option('dry-run') => "Preview: Installing {$formattedTitle} (Dry Run)",
+            $this->option('skip-deps') => "Installing {$formattedTitle} Files Only",
+            $this->option("force") => "Installing {$formattedTitle} (Force Mode)",
+            default => "Installing {$formattedTitle}"
+        };
     }
 }

@@ -2,18 +2,16 @@
 
 namespace Fluxtor\Cli\Contracts;
 
-use Fluxtor\Cli\Services\DependencyInstaller;
-use Fluxtor\Cli\Services\FluxtorFileInstaller;
 use Fluxtor\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
+use Illuminate\Console\View\Components\Component;
 
 abstract class BaseInstallationStrategy implements InstallationStrategyInterface
 {
     public function __construct(
         protected Command $command,
         protected InstallationConfig $installationConfig,
-        protected FluxtorFileInstaller $fileInstaller,
-        protected DependencyInstaller $dependencyInstaller,
+        protected Component $consoleComponent,
         protected string $componentName
     ) {}
 

@@ -19,7 +19,9 @@ class ComponentInstaller
         protected InstallationConfig $installationConfig
     ) {
         $this->componentHttpClient = new ComponentHttpClient();
+        
         $this->fileInstaller = new FluxtorFileInstaller($this->installationConfig);
+        
         $this->dependencyInstaller = new DependencyInstaller(
             installationConfig: $this->installationConfig,
             command: $this->command,
