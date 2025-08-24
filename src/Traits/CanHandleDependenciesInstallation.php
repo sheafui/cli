@@ -1,7 +1,9 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Fluxtor\Cli\Traits;
 
+use Fluxtor\Cli\Services\ComponentInstaller;
+use Fluxtor\Cli\Services\FluxtorConfig;
 use Fluxtor\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
@@ -9,19 +11,31 @@ use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\confirm;
 
-class DependencyInstaller
+trait CanHandleDependenciesInstallation
 {
-    public function __construct(protected InstallationConfig $installationConfig, protected Command $command, protected $components) {}
 
-    public function install($dependencies)
+    protected InstallationConfig $installationConfig;
+    protected $consoleComponent;
+    protected Command $command;
+
+    public function initConsoleComponent($consoleComponent)
     {
-        $name = $this->installationConfig->componentHeadlineName();
-        if (!$dependencies) {
-            return;
-        }
+        $this->consoleComponent = $consoleComponent;
+    }
 
-        if ($this->installationConfig->shouldSkipInstallDeps()) {
-            $this->command->warn(" Skip Installing Dependencies. $name component might not work as expected, run the same command with the `--only-deps` option.");
+    public function initCommand(Command $command)
+    {
+        $this->command = $command;
+    }
+
+    public function initInstallationConfig(InstallationConfig $installationConfig)
+    {
+        $this->installationConfig = $installationConfig;
+    }
+
+    public function installDependencies($dependencies)
+    {
+        if (!$dependencies) {
             return;
         }
 
@@ -63,7 +77,7 @@ class DependencyInstaller
                 
                 (new ComponentInstaller(
                     command: $this->command,
-                    components: $this->components,
+                    components: $this->consoleComponent,
                     installationConfig: $this->installationConfig
                 ))->install($dep);
             }

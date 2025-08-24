@@ -3,12 +3,15 @@
 namespace Fluxtor\Cli\Strategies\Installation;
 
 use Fluxtor\Cli\Contracts\BaseInstallationStrategy;
+use Fluxtor\Cli\Traits\CanHandleDependenciesInstallation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class DryRunStrategy extends BaseInstallationStrategy
 {
+    use CanHandleDependenciesInstallation;
+
     public function execute(Collection $componentResources): int
     {
         $files = $componentResources->get('files', []);
@@ -19,7 +22,7 @@ class DryRunStrategy extends BaseInstallationStrategy
         }
 
         if (!empty($dependencies['internal'])) {
-            $this->dependencyInstaller->install(Arr::wrap($dependencies['internal']));
+            $this->installDependencies(Arr::wrap($dependencies['internal']));
         }
 
         return Command::SUCCESS;

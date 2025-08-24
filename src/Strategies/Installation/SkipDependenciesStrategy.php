@@ -6,17 +6,14 @@ namespace Fluxtor\Cli\Strategies\Installation;
 use Fluxtor\Cli\Contracts\BaseInstallationStrategy;
 use Fluxtor\Cli\Traits\CanHandleFilesInstallation;
 use Fluxtor\Cli\Services\FluxtorConfig;
-use Fluxtor\Cli\Traits\CanHandleDependenciesInstallation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
 
-class FullInstallationStrategy extends BaseInstallationStrategy
+class SkipDependenciesStrategy extends BaseInstallationStrategy
 {
-
-    use CanHandleDependenciesInstallation;
     use CanHandleFilesInstallation;
 
     public function execute($componentResources): int
@@ -24,30 +21,18 @@ class FullInstallationStrategy extends BaseInstallationStrategy
 
         $existingChoice = $this->handleExistingComponent();
 
-        if ($existingChoice === Command::INVALID) {
-            $this->command->error(" Cancelled");
-            return Command::INVALID;
-        }
+            if ($existingChoice === Command::INVALID) {
+                $this->command->error(" Cancelled");
+                return Command::INVALID;
+            }
 
         $createdFiles = $this->installFiles($componentResources->get('files'));
 
         FluxtorConfig::saveInstalledComponent($this->componentName);
 
         $this->reportInstallation($createdFiles);
-
-        $this->runInitialization();
-
-        $this->installDependencies($componentResources->get('dependencies'));
-
+        
         return Command::SUCCESS;
-    }
-
-    public function runInitialization()
-    {
-        $this->initCommand($this->command);
-        $this->initConsoleComponent($this->consoleComponent);
-        $this->initInstallationConfig($this->installationConfig);
-        $this->initInstallationConfigForFilesInstallation($this->installationConfig);
     }
 
     private function reportInstallation(array $createdFiles): void
@@ -72,7 +57,7 @@ class FullInstallationStrategy extends BaseInstallationStrategy
             return;
         }
 
-        $name = $this->installationConfig->componentHeadlineName(); // Assuming you have this method
+        $name = $this->installationConfig->componentHeadlineName();
 
         $choice = select(
             label: "Component '{$name}' already exists. What would you like to do?",
