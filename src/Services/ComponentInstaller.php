@@ -1,9 +1,9 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Sheaf\Cli\Services;
 
-use Fluxtor\Cli\Strategies\Installation\InstallationStrategyFactory;
-use Fluxtor\Cli\Support\InstallationConfig;
+use Sheaf\Cli\Strategies\Installation\InstallationStrategyFactory;
+use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 
 class ComponentInstaller
@@ -39,7 +39,7 @@ class ComponentInstaller
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 
-            if (config('fluxtor.env') !== 'production') {
+            if (config('sheaf.env') !== 'production') {
                 $this->components->error($th->getTraceAsString());
             }
 

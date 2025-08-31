@@ -3,7 +3,7 @@
 return [
     'cli' => [
         'server_url' =>
-        'https://fluxtor.dev'
+        'https://sheaf.dev'
     ],
     'env' => 'production'
 ];

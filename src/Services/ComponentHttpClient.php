@@ -1,6 +1,6 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Sheaf\Cli\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -13,8 +13,8 @@ class ComponentHttpClient
 
     public function __construct()
     {
-        $this->url = config('fluxtor.cli.server_url');
-        $this->token = FluxtorConfig::getUserToken();
+        $this->url = config('sheaf.cli.server_url');
+        $this->token = SheafConfig::getUserToken();
     }
     public function fetchResources(string $componentName)
     {
@@ -25,7 +25,7 @@ class ComponentHttpClient
         }
 
         if (!$isComponentFree['isFree'] && !$this->token) {
-            throw new Exception("You need to login, Please run 'php artisan fluxtor:login' and login with your fluxtor account.");
+            throw new Exception("You need to login, Please run 'php artisan sheaf:login' and login with your sheaf account.");
         }
 
         $response =  Http::asJson()

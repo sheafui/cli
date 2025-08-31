@@ -1,8 +1,8 @@
 <?php
 
-namespace Fluxtor\Cli\Tests\Unit;
+namespace Sheaf\Cli\Tests\Unit;
 
-use Fluxtor\Cli\Tests\TestCase;
+use Sheaf\Cli\Tests\TestCase;
 
 class ListCommandTest extends TestCase {
 

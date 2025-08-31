@@ -1,9 +1,9 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Sheaf\Cli\Services;
 
 use Exception;
-use Fluxtor\Cli\Support\InitializationConfig;
+use Sheaf\Cli\Support\InitializationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -25,7 +25,7 @@ class PackageInitializationService
     }
 
     /**
-     * Initialize the entire Fluxtor package with all dependencies
+     * Initialize the entire Sheaf package with all dependencies
      */
     public function initializePackage()
     {
@@ -48,7 +48,7 @@ class PackageInitializationService
 
             return true;
         } catch (\Throwable $th) {
-            $this->command->error("Initialize Fluxtor Package Failed.\n\nIssue: " . $th->getMessage());
+            $this->command->error("Initialize Sheaf Package Failed.\n\nIssue: " . $th->getMessage());
             return false;
         }
     }
@@ -138,12 +138,12 @@ class PackageInitializationService
             strpos($content, "@import './{$this->initConfig->getThemeFileName()}'") === false
         ) {
             // Add import at the beginning
-            $importStatement = "@import './{$this->initConfig->getThemeFileName()}'; /* By Fluxtor.dev */ \n";
+            $importStatement = "@import './{$this->initConfig->getThemeFileName()}'; /* By Sheaf.dev */ \n";
             $newContent = $importStatement . $content;
         }
 
         if (strpos($content, '@custom-variant') === false) {
-            $newContent .= "\n\n @custom-variant dark (&:where(.dark, .dark *)); /* By Fluxtor.dev */ \n";
+            $newContent .= "\n\n @custom-variant dark (&:where(.dark, .dark *)); /* By Sheaf.dev */ \n";
         }
 
         File::put($path, $newContent);

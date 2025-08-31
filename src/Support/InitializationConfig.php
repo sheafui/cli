@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Fluxtor\Cli\Support;
+namespace Sheaf\Cli\Support;
 
 class InitializationConfig
 {

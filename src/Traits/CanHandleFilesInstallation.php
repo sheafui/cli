@@ -1,8 +1,8 @@
 <?php
 
-namespace Fluxtor\Cli\Traits;
+namespace Sheaf\Cli\Traits;
 
-use Fluxtor\Cli\Support\InstallationConfig;
+use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;

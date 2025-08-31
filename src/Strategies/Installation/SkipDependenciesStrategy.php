@@ -1,11 +1,11 @@
 <?php
 
 
-namespace Fluxtor\Cli\Strategies\Installation;
+namespace Sheaf\Cli\Strategies\Installation;
 
-use Fluxtor\Cli\Contracts\BaseInstallationStrategy;
-use Fluxtor\Cli\Traits\CanHandleFilesInstallation;
-use Fluxtor\Cli\Services\FluxtorConfig;
+use Sheaf\Cli\Contracts\BaseInstallationStrategy;
+use Sheaf\Cli\Traits\CanHandleFilesInstallation;
+use Sheaf\Cli\Services\SheafConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -28,7 +28,7 @@ class SkipDependenciesStrategy extends BaseInstallationStrategy
 
         $createdFiles = $this->installFiles($componentResources->get('files'));
 
-        FluxtorConfig::saveInstalledComponent($this->componentName);
+        SheafConfig::saveInstalledComponent($this->componentName);
 
         $this->reportInstallation($createdFiles);
         

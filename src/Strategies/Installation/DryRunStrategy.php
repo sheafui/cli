@@ -1,9 +1,9 @@
 <?php
 
-namespace Fluxtor\Cli\Strategies\Installation;
+namespace Sheaf\Cli\Strategies\Installation;
 
-use Fluxtor\Cli\Contracts\BaseInstallationStrategy;
-use Fluxtor\Cli\Traits\CanHandleDependenciesInstallation;
+use Sheaf\Cli\Contracts\BaseInstallationStrategy;
+use Sheaf\Cli\Traits\CanHandleDependenciesInstallation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;

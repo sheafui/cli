@@ -1,9 +1,9 @@
 <?php
 
-namespace Fluxtor\Cli\Commands;
+namespace Sheaf\Cli\Commands;
 
-use Fluxtor\Cli\Services\ComponentInstaller;
-use Fluxtor\Cli\Support\InstallationConfig;
+use Sheaf\Cli\Services\ComponentInstaller;
+use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -17,7 +17,7 @@ class InstallComponentCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fluxtor:install 
+    protected $signature = 'sheaf:install 
     {name?*          : the name of the component.} 
     {--force         : override the component file if it exist.} 
     {--skip-deps     : Skip Dependency Installation.}
@@ -31,7 +31,7 @@ class InstallComponentCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Installing a fluxtor Component';
+    protected $description = 'Installing a sheaf Component';
 
     /**
      * Execute the console command.
@@ -58,7 +58,7 @@ class InstallComponentCommand extends Command
             $result = (new ComponentInstaller($this, $this->components, $installationConfig))->install($name);
 
             if ($result === Command::SUCCESS) {
-                $this->components->info("Full documentation: https://fluxtor.dev/docs/components/{$installationConfig->componentName()}");
+                $this->components->info("Full documentation: https://sheaf.dev/docs/components/{$installationConfig->componentName()}");
             }
         }
     }

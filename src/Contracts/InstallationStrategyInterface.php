@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Fluxtor\Cli\Contracts;
+namespace Sheaf\Cli\Contracts;
 
 use Illuminate\Support\Collection;
 

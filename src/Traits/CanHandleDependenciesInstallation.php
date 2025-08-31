@@ -1,10 +1,10 @@
 <?php
 
-namespace Fluxtor\Cli\Traits;
+namespace Sheaf\Cli\Traits;
 
-use Fluxtor\Cli\Services\ComponentInstaller;
-use Fluxtor\Cli\Services\FluxtorConfig;
-use Fluxtor\Cli\Support\InstallationConfig;
+use Sheaf\Cli\Services\ComponentInstaller;
+use Sheaf\Cli\Services\SheafConfig;
+use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Process;
@@ -111,7 +111,7 @@ trait CanHandleDependenciesInstallation
 
     public function shouldInstallDependency($dependency, $info)
     {
-        $installedComponents = FluxtorConfig::getInstalledComponents();
+        $installedComponents = SheafConfig::getInstalledComponents();
 
         if (!$installedComponents) {
             return true;
