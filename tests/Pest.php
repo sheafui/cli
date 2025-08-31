@@ -11,7 +11,7 @@
 |
 */
 
-pest()->extend(\Fluxtor\Cli\Tests\TestCase::class)
+pest()->extend(\Sheaf\Cli\Tests\TestCase::class)
     ->in('Unit')
     ->in('Feature');
 

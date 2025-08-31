@@ -1,11 +1,11 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Sheaf\Cli\Services;
 
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 
-class FluxtorConfig
+class SheafConfig
 {
     public static function saveLoggedInUserCredentials(string $email, string $token)
     {
@@ -30,7 +30,7 @@ class FluxtorConfig
         if (!$home) {
             throw new RuntimeException('Unable to determine user home directory.');
         }
-        return rtrim($home, '/') . '/.fluxtor';
+        return rtrim($home, '/') . '/.sheaf';
     }
 
     public static function getUserToken()
@@ -71,15 +71,15 @@ class FluxtorConfig
             'installationTime' => time()
         ];
 
-        File::put(base_path('fluxtor.json'), json_encode($installedComponents, true));
+        File::put(base_path('sheaf.json'), json_encode($installedComponents, true));
     }
 
     public static function getInstalledComponents()
     {
         $installedComponents = [];
 
-        if (File::exists(base_path('fluxtor.json'))) {
-            $installedComponents = json_decode(File::get(base_path('fluxtor.json')), true);
+        if (File::exists(base_path('sheaf.json'))) {
+            $installedComponents = json_decode(File::get(base_path('sheaf.json')), true);
         }
 
         return $installedComponents;

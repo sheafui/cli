@@ -1,6 +1,6 @@
 <?php
 
-namespace Fluxtor\Cli\Tests;
+namespace Sheaf\Cli\Tests;
 
 use Orchestra\Testbench\PHPUnit\TestCase as PHPUnitTestCase;
 

@@ -1,13 +1,13 @@
 <?php
 
-namespace Fluxtor\Cli;
+namespace Sheaf\Cli;
 
-use Fluxtor\Cli\Commands\FluxtorInitCommand;
-use Fluxtor\Cli\Commands\InstallComponentCommand;
-use Fluxtor\Cli\Commands\ListCommand;
-use Fluxtor\Cli\Commands\LoginCommand;
-use Fluxtor\Cli\Commands\LogoutCommand;
-use Fluxtor\Cli\Commands\WhoAmICommand;
+use Sheaf\Cli\Commands\SheafInitCommand;
+use Sheaf\Cli\Commands\InstallComponentCommand;
+use Sheaf\Cli\Commands\ListCommand;
+use Sheaf\Cli\Commands\LoginCommand;
+use Sheaf\Cli\Commands\LogoutCommand;
+use Sheaf\Cli\Commands\WhoAmICommand;
 use Illuminate\Support\ServiceProvider as SupportServiceProvider;
 
 class ServiceProvider extends SupportServiceProvider
@@ -15,7 +15,7 @@ class ServiceProvider extends SupportServiceProvider
     public function boot()
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([FluxtorInitCommand::class]);
+            $this->commands([SheafInitCommand::class]);
             $this->commands([LoginCommand::class]);
             $this->commands([ListCommand::class]);
             $this->commands([InstallComponentCommand::class]);
@@ -25,14 +25,14 @@ class ServiceProvider extends SupportServiceProvider
 
         $this->publishes(
             [
-                __DIR__ . '/../config/fluxtor.php' => config_path('fluxtor.php'),
+                __DIR__ . '/../config/sheaf.php' => config_path('sheaf.php'),
             ],
-            'fluxtor-config',
+            'sheaf-config',
         );
     }
 
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/fluxtor.php', 'fluxtor');
+        $this->mergeConfigFrom(__DIR__ . '/../config/sheaf.php', 'sheaf');
     }
 }

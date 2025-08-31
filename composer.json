@@ -1,25 +1,25 @@
 {
-  "name": "fluxtor/cli",
-  "description": "A CLI tool for fluxtor-dev",
+  "name": "sheaf/cli",
+  "description": "A CLI tool for Sheaf UI",
   "type": "library",
   "keywords": [
     "laravel",
     "cli",
-    "fluxtor",
+    "sheaf",
     "package",
     "laravel-package",
     "artisan-command"   
   ],
-  "homepage": "https://github.com/fluxtorphp/cli",
+  "homepage": "https://github.com/sheaf/cli",
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Fluxtor\\Cli\\": "src/"
+      "Sheaf\\Cli\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Fluxtor\\Cli\\Tests\\": "tests/"
+      "Sheaf\\Cli\\Tests\\": "tests/"
     }
   },
   "authors": [
@@ -33,7 +33,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "Fluxtor\\Cli\\ServiceProvider"
+        "Sheaf\\Cli\\ServiceProvider"
       ]
     }
   },

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Fluxtor\Cli\Support;
+namespace Sheaf\Cli\Support;
 use Illuminate\Support\Str;
 
 
@@ -20,6 +20,11 @@ class InstallationConfig {
 
     public function componentName() {
         return $this->name;
+    }
+
+    public function allOptionsFalse()
+    {
+        return !$this->shouldForceOverwriting() && !$this->shouldSkipInstallDeps() && !$this->shouldInstallOnlyDeps() && !$this->isDryRun();
     }
 
     public function componentHeadlineName() {

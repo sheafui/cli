@@ -1,6 +1,6 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Sheaf\Cli\Services;
 
 use Exception;
 use Illuminate\Support\Facades\File;
@@ -199,7 +199,7 @@ class JavaScriptAssetService
 
         // Check if import already exists
         if (!preg_match('/^import\s+[\'"]\.\/globals\/theme\.js[\'"]/', $content)) {
-            $importStatement = "import './globals/theme.js'; /* By Fluxtor.dev */ \n\n";
+            $importStatement = "import './globals/theme.js'; /* By Sheaf.dev */ \n\n";
             $content = $importStatement . $content;
         }
 

@@ -1,13 +1,13 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Sheaf\Cli\Services;
 
-use Fluxtor\Cli\Support\InstallationConfig;
+use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;
 
-class FluxtorFileInstaller
+class SheafFileInstaller
 {
     public function __construct(protected InstallationConfig $installationConfig) {}
 

@@ -1,25 +1,25 @@
-# Fluxtor CLI
+# Sheaf CLI
 
 A powerful command-line tool that streamlines component installation, theme management, and project setup to accelerate your Laravel development workflow with beautiful, accessible UI components.
 
 ## Quick Start
 
-Install the Fluxtor CLI package in your Laravel project:
+Install the Sheaf CLI package in your Laravel project:
 
 ```bash
-composer require fluxtor/cli
+composer require sheaf/cli
 ```
 
-Initialize Fluxtor with all required dependencies:
+Initialize Sheaf with all required dependencies:
 
 ```bash
-php artisan fluxtor:init
+php artisan sheaf:init
 ```
 
 Start installing components:
 
 ```bash
-php artisan fluxtor:install button
+php artisan sheaf:install button
 ```
 
 ## Requirements
@@ -32,7 +32,7 @@ php artisan fluxtor:install button
 ## Features
 
 ### One-Command Setup
-The `fluxtor:init` command sets up your entire project with CSS theme system, dark mode support, JavaScript utilities, and proper file organization.
+The `sheaf:init` command sets up your entire project with CSS theme system, dark mode support, JavaScript utilities, and proper file organization.
 
 ### Comprehensive Theme System
 Built-in support for light/dark themes with CSS custom properties and Alpine.js integration for seamless theme switching.
@@ -41,26 +41,26 @@ Built-in support for light/dark themes with CSS custom properties and Alpine.js 
 Install components with automatic dependency resolution. Each component includes all required files and dependencies.
 
 ### Component Discovery
-Browse and filter available components with `fluxtor:list` to find exactly what you need for your project.
+Browse and filter available components with `sheaf:list` to find exactly what you need for your project.
 
 ### Premium Access
-Authenticate with your Fluxtor account using `fluxtor:login` to access premium components and features.
+Authenticate with your Sheaf account using `sheaf:login` to access premium components and features.
 
 ## Installation Options
 
 ### Interactive Setup
 ```bash
-php artisan fluxtor:init
+php artisan sheaf:init
 ```
 
 ### Quick Setup with All Features
 ```bash
-php artisan fluxtor:init --with-dark-mode --with-phosphor
+php artisan sheaf:init --with-dark-mode --with-phosphor
 ```
 
 ### Custom Configuration
 ```bash
-php artisan fluxtor:init --css-file=custom.css --theme-file=my-theme --skip-prompts
+php artisan sheaf:init --css-file=custom.css --theme-file=my-theme --skip-prompts
 ```
 
 ## Component Management
@@ -68,25 +68,25 @@ php artisan fluxtor:init --css-file=custom.css --theme-file=my-theme --skip-prom
 ### Install Components
 ```bash
 # Install a single component
-php artisan fluxtor:install button
+php artisan sheaf:install button
 
 # Install with options
-php artisan fluxtor:install modal --force --no-deps
+php artisan sheaf:install modal --force --no-deps
 ```
 
 ### Browse Components
 ```bash
 # List all components
-php artisan fluxtor:list
+php artisan sheaf:list
 
 # Filter by access level
-php artisan fluxtor:list --free
-php artisan fluxtor:list --premium
+php artisan sheaf:list --free
+php artisan sheaf:list --premium
 ```
 
 ## File Structure
 
-After initialization, Fluxtor creates this organized structure:
+After initialization, Sheaf creates this organized structure:
 
 ```
 resources/
@@ -94,11 +94,10 @@ resources/
 │   ├── app.css (updated with theme import)
 │   └── theme.css (CSS custom properties)
 ├── js/
-│   └── fluxtor/
-│       ├── utils.js (Alpine.js utilities)
-│       ├── app.js (updated with imports)
-│       └── globals/
-│           └── theme.js (Dark mode system)
+│   ├── utils.js (Alpine.js utilities)
+│   ├── app.js (updated with imports)
+│   └── globals/
+│       └── theme.js (Dark mode system)
 └── views/
     └── components/
         └── ui/ (installed components)
@@ -106,7 +105,7 @@ resources/
 
 ## Documentation
 
-Visit [fluxtor.dev](https://fluxtor.dev) for:
+Visit [sheafui.dev](https://sheafui.dev) for:
 - Complete component documentation
 - Usage examples
 - Theme customization guides
@@ -114,4 +113,4 @@ Visit [fluxtor.dev](https://fluxtor.dev) for:
 
 ## License
 
-Fluxtor CLI is open-source software. Premium components require a valid license.
+Sheaf CLI is open-source software. Premium components require a valid license.

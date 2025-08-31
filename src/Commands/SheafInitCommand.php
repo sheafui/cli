@@ -1,9 +1,9 @@
 <?php
 
-namespace Fluxtor\Cli\Commands;
+namespace Sheaf\Cli\Commands;
 
-use Fluxtor\Cli\Services\PackageInitializationService;
-use Fluxtor\Cli\Support\InitializationConfig;
+use Sheaf\Cli\Services\PackageInitializationService;
+use Sheaf\Cli\Support\InitializationConfig;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
@@ -11,14 +11,14 @@ use function Laravel\Prompts\text;
 
 
 
-class FluxtorInitCommand extends Command
+class SheafInitCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'fluxtor:init 
+    protected $signature = 'sheaf:init 
                             {--with-dark-mode       : Include dark mode theme variables and utilities} 
                             {--with-livewire        : Install and setup livewire} 
                             {--with-phosphor        : Install and configure Phosphor Icons package}
@@ -32,7 +32,7 @@ class FluxtorInitCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Initialize Fluxtor package with all required dependencies, assets, and configurations for your Laravel project.';
+    protected $description = 'Initialize Sheaf package with all required dependencies, assets, and configurations for your Laravel project.';
 
     /**
      * Execute the console command.
@@ -66,7 +66,7 @@ class FluxtorInitCommand extends Command
             return Command::SUCCESS;
         }
 
-        $this->error('Fluxtor package initialization failed. Please check the logs for details.');
+        $this->error('Sheaf package initialization failed. Please check the logs for details.');
         return Command::FAILURE;
     }
 
@@ -164,7 +164,7 @@ class FluxtorInitCommand extends Command
             label: 'Target CSS file for package assets integration',
             placeholder: $defaultFile,
             default: $defaultFile,
-            hint: 'File path relative to resources/css/ directory where Fluxtor assets will be injected',
+            hint: 'File path relative to resources/css/ directory where Sheaf assets will be injected',
             validate: fn($input) => $this->validateCssFileName($input)
         );
     }
@@ -180,7 +180,7 @@ class FluxtorInitCommand extends Command
             label: 'Theme CSS file name',
             placeholder: $defaultName,
             default: $defaultName,
-            hint: 'Generated Fluxtor theme file.',
+            hint: 'Generated Sheaf theme file.',
             validate: fn($input) => $this->validateCssFileName($input)
         );
     }
@@ -207,17 +207,17 @@ class FluxtorInitCommand extends Command
 
 
     /**
-     * Display the Fluxtor package banner
+     * Display the Sheaf package banner
      */
-    protected function  displayBanner(): void
+    protected function displayBanner(): void
     {
         $this->newLine();
-        $this->line('  <fg=blue>███████╗██╗     ██╗   ██╗██╗  ██╗████████╗ ██████╗ ██████╗ </>');
-        $this->line('  <fg=blue>██╔════╝██║     ██║   ██║╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔══██╗</>');
-        $this->line('  <fg=blue>█████╗  ██║     ██║   ██║ ╚███╔╝    ██║   ██║   ██║██████╔╝</>');
-        $this->line('  <fg=blue>██╔══╝  ██║     ██║   ██║ ██╔██╗    ██║   ██║   ██║██╔══██╗</>');
-        $this->line('  <fg=blue>██║     ███████╗╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝██║  ██║</>');
-        $this->line('  <fg=blue>╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝</>');
+        $this->line('  <fg=blue>███████╗██╗  ██╗███████╗ █████╗ ███████╗    ██╗   ██╗██╗</>');
+        $this->line('  <fg=blue>██╔════╝██║  ██║██╔════╝██╔══██╗██╔════╝    ██║   ██║██║</>');
+        $this->line('  <fg=blue>███████╗███████║█████╗  ███████║█████╗      ██║   ██║██║</>');
+        $this->line('  <fg=blue>╚════██║██╔══██║██╔══╝  ██╔══██║██╔══╝      ██║   ██║██║</>');
+        $this->line('  <fg=blue>███████║██║  ██║███████╗██║  ██║██║         ╚██████╔╝██║</>');
+        $this->line('  <fg=blue>╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝          ╚═════╝ ╚═╝</>');
         $this->newLine();
         $this->line('  <fg=gray>Laravel UI Package Initialization & Setup</fg=gray>');
         $this->newLine();
@@ -230,7 +230,7 @@ class FluxtorInitCommand extends Command
     protected function displaySuccess(array $configuration): void
     {
         $this->newLine();
-        $this->line(' Fluxtor initialized successfully!');
+        $this->line(' Sheaf initialized successfully!');
         $this->newLine();
 
         $this->line('<fg=green>Package Configuration:</fg=green>');
@@ -257,14 +257,14 @@ class FluxtorInitCommand extends Command
 
     private function heading()
     {
-        $heading = 'Initializing Fluxtor...';
+        $heading = 'Initializing Sheaf...';
 
         $length = strlen("  {$heading}") + 4;
 
         $this->newLine();
-        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>" );
-        $this->line("   <fg=green>" . "  {$heading}" . "</fg=green>" );
-        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>" );
+        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>");
+        $this->line("   <fg=green>" . "  {$heading}" . "</fg=green>");
+        $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>");
         $this->newLine();
     }
 }

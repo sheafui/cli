@@ -1,8 +1,8 @@
 <?php
 
-namespace Fluxtor\Cli\Commands;
+namespace Sheaf\Cli\Commands;
 
-use Fluxtor\Cli\Services\FluxtorConfig;
+use Sheaf\Cli\Services\SheafConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -13,14 +13,14 @@ class LogoutCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fluxtor:logout';
+    protected $signature = 'sheaf:logout';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Logout from your Fluxtor Account.';
+    protected $description = 'Logout from your Sheaf Account.';
 
     /**
      * Execute the console command.
@@ -28,7 +28,7 @@ class LogoutCommand extends Command
     public function handle()
     {
 
-        $configDirectory = FluxtorConfig::configDirectory();
+        $configDirectory = SheafConfig::configDirectory();
         $configFile = "$configDirectory/config.json";
         if (File::exists($configFile)) {
             File::delete($configFile);

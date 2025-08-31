@@ -1,6 +1,6 @@
 <?php
 
-namespace Fluxtor\Cli\Services;
+namespace Sheaf\Cli\Services;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Console\Command;

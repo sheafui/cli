@@ -1,8 +1,8 @@
 <?php
 
-namespace Fluxtor\Cli\Commands;
+namespace Sheaf\Cli\Commands;
 
-use Fluxtor\Cli\Services\FluxtorConfig;
+use Sheaf\Cli\Services\SheafConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -16,24 +16,24 @@ class LoginCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fluxtor:login';
+    protected $signature = 'sheaf:login';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Login with your Fluxtor Account.';
+    protected $description = 'Login with your Sheaf Account.';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $email = text(label: "Email: ", placeholder: 'someone@fluxtor.dev', required: true);
+        $email = text(label: "Email: ", placeholder: 'someone@sheaf.dev', required: true);
         $password = password(label: "Password: ", placeholder: '*********', required: true);
 
-        $serverUrl = config('fluxtor.cli.server_url');
+        $serverUrl = config('sheaf.cli.server_url');
 
         $response = Http::post("$serverUrl/api/cli/login", ['email' => $email, 'password' => $password]);
 
@@ -46,7 +46,7 @@ class LoginCommand extends Command
         
         $token = $result->get('token');
 
-        FluxtorConfig::saveLoggedInUserCredentials($email, $token);
+        SheafConfig::saveLoggedInUserCredentials($email, $token);
 
         $this->components->info("You have logged in as $email.");
     }

@@ -1,9 +1,9 @@
 <?php
 
-namespace Fluxtor\Cli\Commands;
+namespace Sheaf\Cli\Commands;
 
-use Fluxtor\Cli\Services\AccountService;
-use Fluxtor\Cli\Services\FluxtorConfig;
+use Sheaf\Cli\Services\AccountService;
+use Sheaf\Cli\Services\SheafConfig;
 use Illuminate\Console\Command;
 
 class WhoAmICommand extends Command
@@ -14,24 +14,24 @@ class WhoAmICommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fluxtor:whoami';
+    protected $signature = 'sheaf:whoami';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Display the currently authenticated Fluxtor account information';
+    protected $description = 'Display the currently authenticated Sheaf account information';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $currentUser = FluxtorConfig::getConfigFile();
+        $currentUser = SheafConfig::getConfigFile();
 
         if(!$currentUser) {
-            $this->components->warn("You're not log in. please login first with your fluxtor account.");
+            $this->components->warn("You're not log in. please login first with your sheaf account.");
             return Command::SUCCESS;
         }
 

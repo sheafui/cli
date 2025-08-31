@@ -1,6 +1,6 @@
 <?php
 
-namespace Fluxtor\Cli\Commands;
+namespace Sheaf\Cli\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
@@ -13,7 +13,7 @@ class ListCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fluxtor:list {--type=all : Filter by component type (free|premium)}';
+    protected $signature = 'sheaf:list {--type=all : Filter by component type (free|premium)}';
 
     /**
      * The console command description.
@@ -28,7 +28,7 @@ class ListCommand extends Command
     public function handle()
     {
         try {
-            $serverUrl = config('fluxtor.cli.server_url');
+            $serverUrl = config('sheaf.cli.server_url');
 
             $response = Http::get($serverUrl . '/api/cli/list');
 

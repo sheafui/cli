@@ -1,8 +1,8 @@
 <?php
 
-namespace Fluxtor\Cli\Contracts;
+namespace Sheaf\Cli\Contracts;
 
-use Fluxtor\Cli\Support\InstallationConfig;
+use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 
 abstract class BaseInstallationStrategy implements InstallationStrategyInterface

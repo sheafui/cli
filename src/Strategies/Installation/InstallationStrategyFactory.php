@@ -1,10 +1,10 @@
 <?php
 
 
-namespace Fluxtor\Cli\Strategies\Installation;
+namespace Sheaf\Cli\Strategies\Installation;
 
-use Fluxtor\Cli\Contracts\InstallationStrategyInterface;
-use Fluxtor\Cli\Support\InstallationConfig;
+use Sheaf\Cli\Contracts\InstallationStrategyInterface;
+use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 
 class InstallationStrategyFactory
