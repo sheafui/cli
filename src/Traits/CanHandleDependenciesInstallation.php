@@ -55,6 +55,13 @@ trait CanHandleDependenciesInstallation
         $name = $this->installationConfig->componentHeadlineName();
         $confirmInstall = $this->installationConfig->shouldInstallInternalDeps();
 
+        $isThereOutdatedDependencies = $this->checkOutDatedDependencies($deps);
+
+        if (!$isThereOutdatedDependencies) {
+            $this->command->info(" <fg=white>All Component Dependencies are up to date.</fg=white>");
+            return;
+        }
+
         if (!$confirmInstall) {
             $this->command->warn(" $name component requires internal dependencies to function properly.");
             $confirmInstall = confirm(label: 'Install required dependencies?', default: true);
@@ -74,7 +81,7 @@ trait CanHandleDependenciesInstallation
 
                 $this->installationConfig->setOnlyDeps(false);
                 $this->installationConfig->setComponentName($dep);
-                
+
                 (new ComponentInstaller(
                     command: $this->command,
                     components: $this->consoleComponent,
@@ -85,6 +92,17 @@ trait CanHandleDependenciesInstallation
 
         $installationMessage = $installedDependencies ? "All $name dependencies installed successfully." : "$name Dependencies are already up to date.";
         $this->command->info(" <fg=white>$installationMessage</fg=white>");
+    }
+
+    public function checkOutDatedDependencies(array $deps)
+    {
+        foreach ($deps as $dep => $info) {
+            if ($this->shouldInstallDependency($dep, $info)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function installExternalDeps(array $deps)

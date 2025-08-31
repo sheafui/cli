@@ -132,21 +132,21 @@ class PackageInitializationService
     protected function addImportToAppCssFile($path)
     {
         $content = File::get($path);
-
+        
         // Check if import already exists
         if (
             strpos($content, "@import './{$this->initConfig->getThemeFileName()}'") === false
         ) {
             // Add import at the beginning
             $importStatement = "@import './{$this->initConfig->getThemeFileName()}'; /* By Sheaf.dev */ \n";
-            $newContent = $importStatement . $content;
+            $content = $importStatement . $content;
         }
 
         if (strpos($content, '@custom-variant') === false) {
-            $newContent .= "\n\n @custom-variant dark (&:where(.dark, .dark *)); /* By Sheaf.dev */ \n";
+            $content .= "\n\n @custom-variant dark (&:where(.dark, .dark *)); /* By Sheaf.dev */ \n";
         }
 
-        File::put($path, $newContent);
+        File::put($path, $content);
     }
 
     public function isComposerPackageInstalled($packageName)

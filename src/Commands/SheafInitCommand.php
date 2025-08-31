@@ -212,12 +212,12 @@ class SheafInitCommand extends Command
     protected function displayBanner(): void
     {
         $this->newLine();
-        $this->line('  <fg=blue>███████╗██╗  ██╗███████╗ █████╗ ███████╗</>');
-        $this->line('  <fg=blue>██╔════╝██║  ██║██╔════╝██╔══██╗██╔════╝</>');
-        $this->line('  <fg=blue>███████╗███████║█████╗  ███████║█████╗  </>');
-        $this->line('  <fg=blue>╚════██║██╔══██║██╔══╝  ██╔══██║██╔══╝  </>');
-        $this->line('  <fg=blue>███████║██║  ██║███████╗██║  ██║██║     </>');
-        $this->line('  <fg=blue>╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     </>');
+        $this->line('  <fg=blue>███████╗██╗  ██╗███████╗ █████╗ ███████╗    ██╗   ██╗██╗</>');
+        $this->line('  <fg=blue>██╔════╝██║  ██║██╔════╝██╔══██╗██╔════╝    ██║   ██║██║</>');
+        $this->line('  <fg=blue>███████╗███████║█████╗  ███████║█████╗      ██║   ██║██║</>');
+        $this->line('  <fg=blue>╚════██║██╔══██║██╔══╝  ██╔══██║██╔══╝      ██║   ██║██║</>');
+        $this->line('  <fg=blue>███████║██║  ██║███████╗██║  ██║██║         ╚██████╔╝██║</>');
+        $this->line('  <fg=blue>╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝          ╚═════╝ ╚═╝</>');
         $this->newLine();
         $this->line('  <fg=gray>Laravel UI Package Initialization & Setup</fg=gray>');
         $this->newLine();

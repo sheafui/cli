@@ -3,7 +3,7 @@
 return [
     'cli' => [
         'server_url' =>
-        'https://sheaf.dev'
+        'https://sheafui.dev'
     ],
     'env' => 'production'
 ];

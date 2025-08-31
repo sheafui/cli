@@ -22,6 +22,11 @@ class InstallationConfig {
         return $this->name;
     }
 
+    public function allOptionsFalse()
+    {
+        return !$this->shouldForceOverwriting() && !$this->shouldSkipInstallDeps() && !$this->shouldInstallOnlyDeps() && !$this->isDryRun();
+    }
+
     public function componentHeadlineName() {
         return Str::of($this->name)->headline();
     }
