@@ -43,9 +43,6 @@ Install components with automatic dependency resolution. Each component includes
 ### Component Discovery
 Browse and filter available components with `sheaf:list` to find exactly what you need for your project.
 
-### Premium Access
-Authenticate with your Sheaf account using `sheaf:login` to access premium components and features.
-
 ## Installation Options
 
 ### Interactive Setup
@@ -80,8 +77,7 @@ php artisan sheaf:install modal --force --no-deps
 php artisan sheaf:list
 
 # Filter by access level
-php artisan sheaf:list --free
-php artisan sheaf:list --premium
+php artisan sheaf:list
 ```
 
 ## File Structure
