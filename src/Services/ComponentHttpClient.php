@@ -8,20 +8,24 @@ use Illuminate\Support\Str;
 
 class ComponentHttpClient
 {
-    protected string $url;
+    protected string $baseUrl;
     protected string|null $token;
 
     public function __construct()
     {
-        $this->url = config('sheaf.cli.server_url');
+        $this->baseUrl = config('sheaf.cli.server_url');
         $this->token = SheafConfig::getUserToken();
     }
     public function fetchResources(string $componentName)
     {
 
+        $projectHash = SheafConfig::getProjectHash();
+
+        $url = "{$this->baseUrl}/api/cli/components/$componentName?project_hash=$projectHash";
+
         $response =  Http::asJson()
             ->when($this->token, fn($http) => $http->withToken($this->token))
-            ->get("{$this->url}/api/cli/components/$componentName");
+            ->get($url);
 
         if ($response->failed()) {
             $component = Str::of($componentName)->headline();

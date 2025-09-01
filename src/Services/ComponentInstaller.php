@@ -45,6 +45,7 @@ class ComponentInstaller
                 $componentName
             );
 
+
             return $strategy->execute(collect($componentResources['data']));
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
