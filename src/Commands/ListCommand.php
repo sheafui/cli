@@ -13,7 +13,7 @@ class ListCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'sheaf:list {--type=all : Filter by component type (free|premium)}';
+    protected $signature = 'sheaf:list';
 
     /**
      * The console command description.
@@ -39,14 +39,7 @@ class ListCommand extends Command
 
             $components = $response->collect();
 
-            $filteredComponents = $this->filterComponents($components);
-
-            if ($filteredComponents->isEmpty()) {
-                $this->components->info('No components found matching your criteria.');
-                return Command::SUCCESS;
-            }
-
-            $this->displayComponents($filteredComponents);
+            $this->displayComponents($components);
 
             return Command::SUCCESS;
         } catch (\Throwable $th) {
@@ -56,19 +49,6 @@ class ListCommand extends Command
     }
 
 
-    public function filterComponents(Collection $components)
-    {
-        $type = $this->option("type");
-
-        if ($type === 'free') {
-            return $components->filter(fn($component) => $component['isFree']);
-        } elseif ($type === 'premium') {
-            return $components->filter(fn($component) => !$component['isFree']);
-        }
-
-        return $components;
-    }
-
     private function displayComponents($components)
     {
         $this->newLine();
@@ -76,11 +56,7 @@ class ListCommand extends Command
         $this->line(str_repeat('=', 50));
 
         foreach ($components as $component) {
-            $badge = $component['isFree']
-                ? '<bg=green;fg=black> FREE </bg=green;fg=black>'
-                : '<bg=yellow;fg=black> PREMIUM </bg=yellow;fg=black>';
-
-            $this->line($badge . ' <fg=white;options=bold>' . $component['name'] . '</fg=white;options=bold>');
+            $this->line(' ✦ <fg=white;options=bold>' . $component['name'] . '</fg=white;options=bold>');
             $this->line('  ' . $component['description']);
             $this->newLine();
         }
