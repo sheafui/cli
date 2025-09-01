@@ -3,6 +3,8 @@
 namespace Sheaf\Cli\Services;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use PhpParser\Node\Stmt\TryCatch;
 use RuntimeException;
 
 class SheafConfig
@@ -21,6 +23,53 @@ class SheafConfig
 
         File::ensureDirectoryExists($configDirectory);
         File::replace("$configDirectory/config.json", serialize($data));
+    }
+
+    public static function saveProjectHash()
+    {
+        $configDirectory = self::configDirectory();
+
+        File::ensureDirectoryExists($configDirectory);
+
+        $path = "$configDirectory/config.json";
+
+        $data = [];
+
+        if (File::exists($path)) {
+            $data = File::get($path);
+            $data = unserialize($data);
+        }
+
+
+        if (array_key_exists('project_hash', $data)) {
+            return;
+        }
+
+        $projectHash = (string) Str::uuid();
+        $data['project_hash'] = $projectHash;
+
+        File::replace($path, serialize($data));
+
+        return $projectHash;
+    }
+
+    public static function getProjectHash()
+    {
+        try {
+            $configDirectory = self::configDirectory();
+
+            $data = File::get("$configDirectory/config.json");
+
+            $projectHash = unserialize($data)['project_hash'];
+
+            if (!$projectHash) {
+                $projectHash = self::saveProjectHash();
+            }
+
+            return $projectHash;
+        } catch (\Throwable $th) {
+            return self::saveProjectHash();;
+        }
     }
 
     public static function configDirectory()
@@ -51,10 +100,10 @@ class SheafConfig
         try {
             $configDirectory = self::configDirectory();
 
-            if(!$configDirectory) {
+            if (!$configDirectory) {
                 return null;
             }
-            
+
             $userData = File::get("$configDirectory/config.json");
 
             return unserialize($userData)['user'];

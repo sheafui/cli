@@ -30,6 +30,9 @@ class PackageInitializationService
     public function initializePackage()
     {
         try {
+
+            SheafConfig::saveProjectHash();
+            
             $javascriptAssets = new JavaScriptAssetService(
                 command: $this->command,
                 forceOverwrite: $this->initConfig->shouldForceOverwrite(),

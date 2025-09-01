@@ -2,6 +2,7 @@
 
 namespace Sheaf\Cli;
 
+use Illuminate\Support\Facades\Event;
 use Sheaf\Cli\Commands\SheafInitCommand;
 use Sheaf\Cli\Commands\InstallComponentCommand;
 use Sheaf\Cli\Commands\ListCommand;
@@ -9,6 +10,8 @@ use Sheaf\Cli\Commands\LoginCommand;
 use Sheaf\Cli\Commands\LogoutCommand;
 use Sheaf\Cli\Commands\WhoAmICommand;
 use Illuminate\Support\ServiceProvider as SupportServiceProvider;
+use Sheaf\Cli\Events\ComponentInstalled;
+use Sheaf\Cli\Listeners\SendComponentInstalledNotification;
 
 class ServiceProvider extends SupportServiceProvider
 {
