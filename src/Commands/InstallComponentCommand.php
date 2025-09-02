@@ -58,7 +58,7 @@ class InstallComponentCommand extends Command
             $result = (new ComponentInstaller($this, $this->components, $installationConfig))->install($name);
 
             if ($result === Command::SUCCESS) {
-                $this->components->info("Full documentation: https://sheafui.dev/docs/components/{$installationConfig->componentName()}");
+                $this->components->info("Full documentation: https://sheafui.dev/docs/components/{$name}");
             }
         }
     }
