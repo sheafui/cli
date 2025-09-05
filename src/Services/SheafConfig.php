@@ -4,42 +4,37 @@ namespace Sheaf\Cli\Services;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use PhpParser\Node\Stmt\TryCatch;
-use RuntimeException;
 
 class SheafConfig
 {
     public static function saveLoggedInUserCredentials(string $email, string $token)
     {
-        $data = [
-            'user' => [
-                'email' => $email,
-                'token' => $token,
-                'logged_in_at' => now()->toIso8601String(),
-            ],
+        $configFile = self::configFile();
+
+        if(File::exists($configFile)) {
+            $data = File::get($configFile);
+            $data = json_decode($data, true);
+        }
+
+        $data['user'] =  [
+            'email' => $email,
+            'token' => $token,
+            'logged_in_at' => now()->toIso8601String(),
         ];
 
-        $configDirectory = self::configDirectory();
-
-        File::ensureDirectoryExists($configDirectory);
-        File::replace("$configDirectory/config.json", serialize($data));
+        File::replace("$configFile", json_encode($data));
     }
 
     public static function saveProjectHash()
     {
-        $configDirectory = self::configDirectory();
-
-        File::ensureDirectoryExists($configDirectory);
-
-        $path = "$configDirectory/config.json";
+        $configFile = self::configFile();
 
         $data = [];
 
-        if (File::exists($path)) {
-            $data = File::get($path);
-            $data = unserialize($data);
+        if (File::exists($configFile)) {
+            $data = File::get($configFile);
+            $data = json_decode($data, true);
         }
-
 
         if (array_key_exists('project_hash', $data)) {
             return;
@@ -48,7 +43,7 @@ class SheafConfig
         $projectHash = (string) Str::uuid();
         $data['project_hash'] = $projectHash;
 
-        File::replace($path, serialize($data));
+        File::replace($configFile, json_encode($data));
 
         return $projectHash;
     }
@@ -56,11 +51,15 @@ class SheafConfig
     public static function getProjectHash()
     {
         try {
-            $configDirectory = self::configDirectory();
+            $configFile = self::configFile();
 
-            $data = File::get("$configDirectory/config.json");
+            if(!File::exists($configFile)) {
+                return self::saveProjectHash();
+            }
 
-            $projectHash = unserialize($data)['project_hash'];
+            $data = File::get("$configFile");
+
+            $projectHash = json_decode($data)['project_hash'];
 
             if (!$projectHash) {
                 $projectHash = self::saveProjectHash();
@@ -72,24 +71,23 @@ class SheafConfig
         }
     }
 
-    public static function configDirectory()
+    public static function configFile()
     {
-        $home = getenv('HOME') ?: $_SERVER['HOME'] ?? (getenv('USERPROFILE') ?? ($_SERVER['USERPROFILE'] ?? null));
-
-        if (!$home) {
-            throw new RuntimeException('Unable to determine user home directory.');
-        }
-        return rtrim($home, '/') . '/.sheaf';
+        return base_path('sheaf.json');
     }
 
     public static function getUserToken()
     {
         try {
-            $configDirectory = self::configDirectory();
+            $configFile = self::configFile();
 
-            $userData = File::get("$configDirectory/config.json");
+            if(!File::exists($configFile)) {
+                return null;
+            }
 
-            return unserialize($userData)['user']['token'];
+            $userData = File::get("$configFile");
+
+            return json_decode($userData)['user']['token'];
         } catch (\Throwable $th) {
             return null;
         }
@@ -98,15 +96,15 @@ class SheafConfig
     public static function getConfigFile()
     {
         try {
-            $configDirectory = self::configDirectory();
+            $configFile = self::configFile();
 
-            if (!$configDirectory) {
+            if(!File::exists($configFile)) {
                 return null;
             }
 
-            $userData = File::get("$configDirectory/config.json");
+            $userData = File::get("$configFile");
 
-            return unserialize($userData)['user'];
+            return json_decode($userData, true)['user'];
         } catch (\Throwable $th) {
             return null;
         }
