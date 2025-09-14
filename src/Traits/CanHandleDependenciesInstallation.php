@@ -18,7 +18,7 @@ trait CanHandleDependenciesInstallation
     protected InstallationConfig $installationConfig;
     protected $consoleComponent;
     protected Command $command;
-    protected string $helperBasePath = "views/components/shared/";
+    protected string $helperBasePath = "views/components/ui/";
 
     public function initConsoleComponent($consoleComponent)
     {
@@ -76,8 +76,6 @@ trait CanHandleDependenciesInstallation
 
             return;
         }
-
-        $this->command->info(" <fg=white>↳ Installing {$name}.</fg=white>");
 
         File::ensureDirectoryExists(resource_path('views/components/shared'));
 
