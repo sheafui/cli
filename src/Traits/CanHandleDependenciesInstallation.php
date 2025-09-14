@@ -77,8 +77,6 @@ trait CanHandleDependenciesInstallation
             return;
         }
 
-        File::ensureDirectoryExists(resource_path('views/components/shared'));
-
         File::put($path, $helper['content']);
 
         SheafConfig::saveInstalledComponent($name);
