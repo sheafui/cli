@@ -7,6 +7,7 @@ use Sheaf\Cli\Services\SheafConfig;
 use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\confirm;
@@ -17,6 +18,7 @@ trait CanHandleDependenciesInstallation
     protected InstallationConfig $installationConfig;
     protected $consoleComponent;
     protected Command $command;
+    protected string $helperBasePath = "views/components/shared/";
 
     public function initConsoleComponent($consoleComponent)
     {
@@ -39,6 +41,10 @@ trait CanHandleDependenciesInstallation
             return;
         }
 
+        if (array_key_exists('helpers', $dependencies)) {
+            $this->installHelpers($dependencies['helpers']);
+        }
+
         if (array_key_exists('internal', $dependencies) && $depInternal = Arr::wrap($dependencies['internal'])) {
 
             $this->installInternalDeps($depInternal);
@@ -48,6 +54,38 @@ trait CanHandleDependenciesInstallation
 
             $this->installExternalDeps($depExternal);
         }
+    }
+
+    public function installHelpers(array $helpers)
+    {
+
+        $this->command->info(" <fg=white>↳ Installing Component Helpers.</fg=white>\n");
+
+        collect($helpers)
+            ->map(fn($helper, $name) => $this->installHelper($helper, $name));
+
+        $this->command->info(" <fg=white>↳ Helpers completed.</fg=white>\n");
+    }
+
+    public function installHelper(array $helper, string $name)
+    {
+        $path = resource_path("{$this->helperBasePath}/$name.blade.php");
+
+        if (file_exists($path) && !$this->shouldInstallDependency($name, $helper)) {
+            $this->command->info("<bg=green;fg=black> $name </bg=green;fg=black> <fg=white>is up to date.</fg=white> <bg=green;fg=black> Skipped </bg=green;fg=black>\n");
+
+            return;
+        }
+
+        $this->command->info(" <fg=white>↳ Installing {$name}.</fg=white>");
+
+        File::ensureDirectoryExists(resource_path('views/components/shared'));
+
+        File::put($path, $helper['content']);
+
+        SheafConfig::saveInstalledComponent($name);
+
+        $this->command->info("<bg=green;fg=black> $name </bg=green;fg=black> <fg=white>has been installed successfully.</fg=white>\n");
     }
 
     public function installInternalDeps(array $deps)
