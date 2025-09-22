@@ -25,40 +25,28 @@ class ComponentUpdater
     public function handleUpdate()
     {
 
-        // if the component does not installed, ask for installing the component
-        $isInstalled = $this->checkIfComponentInstalled();
-
-        if (!$isInstalled) {
+        if (!$this->isComponentInstalled()) {
             return $this->installComponent();
         }
 
-        // else fetch component info
         $resources = $this->httpClient->fetchResources($this->component)['data'];
 
-        // check if there is an update
         if (!$this->needsUpdate($resources['lastModified'])) {
-            // if no update available => exit
             $this->consoleOutput->info("✔ {$this->component} is already up to date.");
             return Command::SUCCESS;
         }
 
-        // else => ask for overwriting the existing content
-        // $this->consoleOutput->info("↻ Update available for {$this->component}.");
         $confirmUpdate = confirm("↻ An update is available. Do you want to overwrite the existing component files?");
 
-        // if no => exit
         if (!$confirmUpdate) {
             $this->artisanCommand->info("<fg=red>✖ Update canceled.</fg=red>");
             return Command::SUCCESS;
         }
 
-        // else => overwrite the existing file
         $this->replaceFiles($resources);
-        $this->artisanCommand->info("✔ {$this->component} files have been updated.");
         $this->updateDependencies($resources);
 
         SheafConfig::saveInstalledComponent($this->component);
-
     }
 
     /**
@@ -72,8 +60,10 @@ class ComponentUpdater
         foreach ($resources['files'] as $file) {
             $path = $file['path'];
             $content = $file['content'];
-            $this->createComponentFile($path, $content);
+            $this->updateComponentFile($path, $content);
         }
+
+        $this->artisanCommand->info("✔ {$this->component} files have been updated.");
     }
 
     public function updateDependencies($resources)
@@ -81,21 +71,20 @@ class ComponentUpdater
         $dependencies = $resources->get("dependencies");
 
         if (!$dependencies) {
-            $this->artisanCommand->info("ℹ {$this->component} has no dependencies.");
+            $this->artisanCommand->info(" {$this->component} has no dependencies.");
 
             return Command::SUCCESS;
         }
 
         $this->artisanCommand->info("↻ Installing dependencies for {$this->component}...");
 
-        $this->runInitialization();
+        $this->initialize();
 
         $this->installDependencies($dependencies);
-
     }
 
 
-    public function checkIfComponentInstalled()
+    public function isComponentInstalled()
     {
         $path = resource_path("views/components/ui/{$this->component}");
 
@@ -113,6 +102,7 @@ class ComponentUpdater
         $installationConfig = new InstallationConfig($this->component);
 
         new ComponentInstaller($this->artisanCommand, $this->consoleOutput, $installationConfig)->install($this->component);
+        
         return Command::SUCCESS;
     }
 
@@ -130,23 +120,23 @@ class ComponentUpdater
 
         return $installedComponents['components'][$this->component]['installationTime'] < $lastModified;
     }
-    
 
-    private function createComponentFile(string $filePath, string $fileContent)
+
+    private function updateComponentFile(string $filePath, string $fileContent)
     {
         $directory = str($filePath)->beforeLast('/');
         File::ensureDirectoryExists($directory);
         File::replace($filePath, $fileContent);
     }
 
-    public function runInitialization()
+    public function initialize()
     {
         $installationConfig = new InstallationConfig($this->component);
-        
+
         $this->initCommand($this->artisanCommand);
-        
+
         $this->initConsoleComponent($this->consoleOutput);
-        
+
         $this->initInstallationConfig($installationConfig);
     }
 }
