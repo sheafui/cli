@@ -8,9 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
-use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\spin;
-use function Laravel\Prompts\text;
 
 class PackageInitializationService
 {
@@ -32,7 +30,7 @@ class PackageInitializationService
         try {
 
             SheafConfig::saveProjectHash();
-            
+
             $javascriptAssets = new JavaScriptAssetService(
                 command: $this->command,
                 forceOverwrite: $this->initConfig->shouldForceOverwrite(),
@@ -135,7 +133,7 @@ class PackageInitializationService
     protected function addImportToAppCssFile($path)
     {
         $content = File::get($path);
-        
+
         // Check if import already exists
         if (
             strpos($content, "@import './{$this->initConfig->getThemeFileName()}'") === false
@@ -152,26 +150,29 @@ class PackageInitializationService
         File::put($path, $content);
     }
 
-    public function isComposerPackageInstalled($packageName)
+    public function isComposerPackageInstalled($package)
     {
-        $composerJsonPath = base_path('composer.json');
 
-        if (!File::exists($composerJsonPath)) {
-            return false;
-        }
+        // $composerJsonPath = base_path('composer.json');
 
-        $composerJson = json_decode(File::get($composerJsonPath), true);
+        // if (!File::exists($composerJsonPath)) {
+        //     return false;
+        // }
 
-        // Check in require
-        if (isset($composerJson['require'][$packageName])) {
-            return true;
-        }
+        // $composerJson = json_decode(File::get($composerJsonPath), true);
 
-        // Check in require-dev
-        if (isset($composerJson['require-dev'][$packageName])) {
-            return true;
-        }
+        // // Check in require
+        // if (isset($composerJson['require'][$package])) {
+        //     return true;
+        // }
 
-        return false;
+        // // Check in require-dev
+        // if (isset($composerJson['require-dev'][$package])) {
+        //     return true;
+        // }
+
+        // return false;
+
+        return \Composer\InstalledVersions::isInstalled($package);
     }
 }

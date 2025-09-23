@@ -22,7 +22,7 @@ class InstallationConfig {
         return $this->name;
     }
 
-    public function allOptionsFalse()
+    public function isAllOptionsFalse()
     {
         return !$this->shouldForceOverwriting() && !$this->shouldSkipInstallDeps() && !$this->shouldInstallOnlyDeps() && !$this->isDryRun();
     }
