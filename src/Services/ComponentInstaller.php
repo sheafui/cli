@@ -29,7 +29,7 @@ class ComponentInstaller
 
             $this->name = $componentName;
 
-            $componentResources = $this->componentHttpClient->fetchResources($componentName);
+            $resources = $this->componentHttpClient->fetchResources($componentName);
 
             $existingChoice = $this->handleExistingComponent();
 
@@ -46,7 +46,7 @@ class ComponentInstaller
             );
 
 
-            return $strategy->execute(collect($componentResources['data']));
+            return $strategy->execute(collect($resources['data']));
         } catch (\Throwable $th) {
             $this->components->error($th->getMessage());
 
@@ -60,7 +60,7 @@ class ComponentInstaller
 
     public function handleExistingComponent()
     {
-        if (!$this->installationConfig->allOptionsFalse() || !$this->ensureComponentIsInstalled() || $this->installationConfig->shouldForceOverwriting()) {
+        if (!$this->installationConfig->isAllOptionsFalse() || !$this->ensureComponentIsInstalled() || $this->installationConfig->shouldForceOverwriting()) {
             return null;
         }
 

@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
 
-use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\text;
 
@@ -52,6 +51,8 @@ class JavaScriptAssetService
      */
     public function setupAppJs()
     {
+
+        
         if ($this->shouldSetupLivewire) {
             $this->SetupLivewire();
             return;
@@ -62,6 +63,11 @@ class JavaScriptAssetService
 
     public function installAndSetupAlpine()
     {
+        // check if livewire version 3 is installed
+        if($this->hasLivewire3()) {
+            return;
+        }
+
         if (!$this->isNpmPackageInstalled('alpinejs')) {
 
             $result = spin(
@@ -266,5 +272,19 @@ class JavaScriptAssetService
         }
 
         return false;
+    }
+
+    /**
+     * Check if Livewire version 3 is installed
+     */
+    protected function hasLivewire3(): bool
+    {
+        if(!\Composer\InstalledVersions::isInstalled('livewire/livewire')) {
+            return false;
+        }
+
+        $version = \Composer\InstalledVersions::getPrettyVersion('livewire/livewire');
+
+        return version_compare($version, 'v3.0.0', '>=');
     }
 }
