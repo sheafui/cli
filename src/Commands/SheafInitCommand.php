@@ -63,6 +63,7 @@ class SheafInitCommand extends Command
 
         if ($result) {
             $this->displaySuccess($configuration);
+            $this->displayNextStep($configuration);
             return Command::SUCCESS;
         }
 
@@ -265,6 +266,30 @@ class SheafInitCommand extends Command
         $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>");
         $this->line("   <fg=green>" . "  {$heading}" . "</fg=green>");
         $this->line(" <fg=green>" . str_repeat("═", $length) . "</fg=green>");
+        $this->newLine();
+    }
+
+
+    protected function displayNextStep(array $configuration): void
+    {
+        $this->newLine();
+        $this->line('<fg=green>Next steps:</fg=green>');
+
+        $this->line('  1. Add <fg=yellow>@vite(["resources/css/app.css", "resources/js/app.js"])</fg=yellow> to your main Blade layout if not already present.');
+
+        if ($configuration['livewire']) {
+            $this->line('  2. Add <fg=yellow>@livewireStyles</fg=yellow> before <fg=yellow>`</head>`</fg=yellow> in your main Blade layout.');
+            $this->line('  3. Add <fg=yellow>@livewireScripts</fg=yellow> before <fg=yellow>`</body>`</fg=yellow> in your main Blade layout.');
+            $nextStep = 4;
+        } else {
+            $this->line('  2. Start building UI components using Alpine.js directives.');
+            $nextStep = 3;
+        }
+
+        $this->line("  $nextStep. Start Installing your first component with <fg=yellow>php artisan sheaf:install button</fg=yellow>");
+
+        $this->newLine();
+        $this->line('<fg=white>Documentation: https://sheafui.dev/docs/guides/overview</fg=white>');
         $this->newLine();
     }
 }
