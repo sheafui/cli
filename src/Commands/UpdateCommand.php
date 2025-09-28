@@ -31,7 +31,7 @@ class UpdateCommand extends Command
 
             $this->banner("Update component: $name");
 
-            new ComponentUpdater($name, $this->components, $this)->handleUpdate();
+            (new ComponentUpdater($name, $this->components, $this))->handleUpdate();
 
             return Command::SUCCESS;
         } catch (\Throwable $th) {
