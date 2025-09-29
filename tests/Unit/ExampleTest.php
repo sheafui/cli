@@ -1,7 +1,16 @@
 <?php
 
-test('that true is true', function () {
-  dump(['class' => get_class($this), 'parent' => get_parent_class($this)]);
+namespace Tests\Unit;
 
-    expect(true)->toBeTrue();
-});
+use Sheaf\Cli\Tests\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic test example.
+     */
+    public function test_that_true_is_true(): void
+    {
+        $this->assertTrue(true);
+    }
+}
