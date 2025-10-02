@@ -2,12 +2,8 @@
 
 namespace Sheaf\Cli\Tests\Unit;
 
-use Sheaf\Cli\Tests\TestCase;
+test('that true is true', function () {
+  dump(['class' => get_class($this), 'parent' => get_parent_class($this)]);
 
-class ListCommandTest extends TestCase {
-
-    public function test_that_true_is_true(): void
-    {
-        $this->assertTrue(true);
-    }
-}
+    expect(true)->toBeTrue();
+});

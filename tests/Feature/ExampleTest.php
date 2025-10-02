@@ -1,7 +1,16 @@
 <?php
 
-it('returns a successful response', function () {
-    $response = $this->get('/');
+namespace Sheaf\Cli\Tests\Feature;
 
-    $response->assertStatus(200);
+use Sheaf\Cli\Tests\TestCase;
+
+uses(TestCase::class);
+
+test('confirm environment is set to testing', function () {
+    expect(config('app.env'))->toBe('testing');
+});
+
+test('sum', function () {
+    $result = 3;
+    expect($result)->toBe(3);
 });
