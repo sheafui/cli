@@ -49,5 +49,8 @@
   },
   "scripts": {
     "test": "@php vendor/bin/pest"
+  },
+  "require": {
+    "wireui/heroicons": "^2.9"
   }
 }
