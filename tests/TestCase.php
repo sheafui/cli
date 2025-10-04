@@ -2,13 +2,14 @@
 
 namespace Sheaf\Cli\Tests;
 
-
 use Pest\Arch\Concerns\Architectable;
+use Illuminate\Foundation\Testing\Concerns\InteractsWithViews; 
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
     use Architectable;
-
+    use InteractsWithViews; 
+    
     /**
      * Get package providers.
      *
@@ -20,5 +21,10 @@ class TestCase extends \Orchestra\Testbench\TestCase
         return [
             \Sheaf\Cli\ServiceProvider::class,
         ];
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
     }
 }

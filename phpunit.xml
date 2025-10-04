@@ -5,7 +5,7 @@
          colors="true"
 >
     <testsuites>
-        <testsuite name="Cli Test Suite">
+        <testsuite name="Sheaf_cli">
             <directory>tests</directory>
         </testsuite>
     </testsuites>
