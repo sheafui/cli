@@ -69,7 +69,7 @@ class InstallComponentCommand extends Command
 
 
         if (!$componentName) {
-            $componentName = text(label: 'What are the component(s) you would like to install or update?', placeholder: 'button', required: true);
+            $componentName = text(label: 'What are the component(s) you would like to install?', placeholder: 'button', required: true);
         }
 
 

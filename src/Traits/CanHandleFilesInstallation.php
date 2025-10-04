@@ -59,8 +59,10 @@ trait CanHandleFilesInstallation
 
     private function createComponentFile(string $filePath, string $fileContent)
     {
-        $directory = str($filePath)->beforeLast('/');
+        $path = base_path($filePath);
+
+        $directory = str($path)->beforeLast('/');
         File::ensureDirectoryExists($directory);
-        File::replace($filePath, $fileContent);
+        File::replace($path, $fileContent);
     }
 }

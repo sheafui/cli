@@ -165,6 +165,10 @@ trait CanHandleDependenciesInstallation
     {
         $installedComponents = SheafConfig::getInstalledComponents();
 
+        if(!File::exists(resource_path("views/components/ui/$dependency"))) {
+            return true;
+        }
+
         if (!$installedComponents) {
             return true;
         }

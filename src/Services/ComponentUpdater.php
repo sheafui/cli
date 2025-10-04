@@ -101,7 +101,7 @@ class ComponentUpdater
 
         $installationConfig = new InstallationConfig($this->component);
 
-        new ComponentInstaller($this->artisanCommand, $this->consoleOutput, $installationConfig)->install($this->component);
+        (new ComponentInstaller($this->artisanCommand, $this->consoleOutput, $installationConfig))->install($this->component);
         
         return Command::SUCCESS;
     }

@@ -7,7 +7,6 @@ use Sheaf\Cli\Support\InitializationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
-
 use function Laravel\Prompts\spin;
 
 class PackageInitializationService
@@ -90,17 +89,15 @@ class PackageInitializationService
      */
     protected function createCssThemeFile()
     {
+        File::ensureDirectoryExists(resource_path('css'));
         $themeFile = resource_path("css/{$this->initConfig->getThemeFileName()}");
         $appCssFile = resource_path("css/{$this->initConfig->getTargetCssFile()}");
-
-        // Create Theme Css file
 
         $themeContent = $this->contentTemplateService->generateThemeCss($this->initConfig->shouldEnableDarkMode());
 
         File::put($themeFile, $themeContent);
         $this->command->info('✓ Created theme file: ' . $themeFile);
 
-        // Add import to main CSS file if it exists
         if (File::exists($appCssFile)) {
             $this->addImportToAppCssFile($appCssFile);
         } else {
@@ -134,11 +131,9 @@ class PackageInitializationService
     {
         $content = File::get($path);
 
-        // Check if import already exists
         if (
             strpos($content, "@import './{$this->initConfig->getThemeFileName()}'") === false
         ) {
-            // Add import at the beginning
             $importStatement = "@import './{$this->initConfig->getThemeFileName()}'; /* By Sheaf.dev */ \n";
             $content = $importStatement . $content;
         }
@@ -152,26 +147,6 @@ class PackageInitializationService
 
     public function isComposerPackageInstalled($package)
     {
-
-        // $composerJsonPath = base_path('composer.json');
-
-        // if (!File::exists($composerJsonPath)) {
-        //     return false;
-        // }
-
-        // $composerJson = json_decode(File::get($composerJsonPath), true);
-
-        // // Check in require
-        // if (isset($composerJson['require'][$package])) {
-        //     return true;
-        // }
-
-        // // Check in require-dev
-        // if (isset($composerJson['require-dev'][$package])) {
-        //     return true;
-        // }
-
-        // return false;
 
         return \Composer\InstalledVersions::isInstalled($package);
     }
