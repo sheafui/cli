@@ -89,6 +89,7 @@ class PackageInitializationService
      */
     protected function createCssThemeFile()
     {
+        File::ensureDirectoryExists(resource_path('css'));
         $themeFile = resource_path("css/{$this->initConfig->getThemeFileName()}");
         $appCssFile = resource_path("css/{$this->initConfig->getTargetCssFile()}");
 

@@ -51,6 +51,8 @@
     "test": "@php vendor/bin/pest"
   },
   "require": {
-    "wireui/heroicons": "^2.9"
+    "wireui/heroicons": "^2.9",
+    "wireui/phosphoricons": "^2.4",
+    "livewire/livewire": "^3.6"
   }
 }

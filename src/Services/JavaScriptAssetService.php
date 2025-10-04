@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
 
+use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\text;
 
@@ -52,7 +53,7 @@ class JavaScriptAssetService
     public function setupAppJs()
     {
 
-        
+
         if ($this->shouldSetupLivewire) {
             $this->SetupLivewire();
             return;
@@ -64,7 +65,7 @@ class JavaScriptAssetService
     public function installAndSetupAlpine()
     {
         // check if livewire version 3 is installed
-        if($this->hasLivewire3()) {
+        if ($this->hasLivewire3()) {
             return;
         }
 
@@ -220,13 +221,25 @@ class JavaScriptAssetService
         if (!File::exists($path)) {
             $path = text(
                 label: "Enter the path (relative to resources/) to your main JS file:",
-                placeholder: '/js/app.js'
+                placeholder: '/js/app.js',
+                default: "/js/app.js",
             );
+
+            $path = resource_path($path);
         }
 
-        if (! File::exists($path)) {
-            throw new Exception("The file '{$path}' does not exist in resources/. Please create it or specify the correct path.");
+        if (File::exists($path)) {
+            return $path;
         }
+
+        $confirm = confirm("The $path is not exists, do you want to create it?", true);
+
+        if (!$confirm) {
+            throw new Exception("The path $path is not exists, can not complete the initialization.");
+        }
+
+        File::ensureDirectoryExists(resource_path('js'));
+        File::put($path, "// Created by Sheaf UI");
 
         return $path;
     }
@@ -279,7 +292,7 @@ class JavaScriptAssetService
      */
     protected function hasLivewire3(): bool
     {
-        if(!\Composer\InstalledVersions::isInstalled('livewire/livewire')) {
+        if (!\Composer\InstalledVersions::isInstalled('livewire/livewire')) {
             return false;
         }
 
