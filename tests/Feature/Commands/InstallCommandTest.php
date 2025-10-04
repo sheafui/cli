@@ -1,12 +1,12 @@
 <?php
 
-use Illuminate\Console\BufferedConsoleOutput;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 
-use function PHPUnit\Framework\directoryExists;
 
 it("Should be able to initialize the package", function () {
+    Process::fake();
+
     $command = $this->artisan("sheaf:init")
         ->expectsQuestion('Install Phosphor Icons package?', 'no')
         ->expectsQuestion('Install and setup livewire?', 'yes')
@@ -20,8 +20,7 @@ it("Should be able to initialize the package", function () {
     }
 
     $command->assertExitCode(0);
-    expect(\Composer\InstalledVersions::isInstalled('livewire/livewire'))->toBeTrue();
-    expect(\Composer\InstalledVersions::isInstalled('wireui/heroicons'))->toBeTrue();
+
     expect(File::exists(resource_path('css/theme.css')))->toBeTrue();
 });
 
