@@ -63,6 +63,6 @@ trait CanHandleFilesInstallation
 
         $directory = str($path)->beforeLast('/');
         File::ensureDirectoryExists($directory);
-        File::replace($path, $fileContent);
+        File::put($path, $fileContent);
     }
 }

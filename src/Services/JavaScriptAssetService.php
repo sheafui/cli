@@ -169,7 +169,7 @@ class JavaScriptAssetService
     protected function ensureDirectoryStructure(): void
     {
         $baseDir = resource_path('js');
-        $globalsDir = "{$baseDir}/globals";
+        $globalsDir = "$baseDir/globals";
 
         if (!File::exists($globalsDir)) {
             File::makeDirectory($globalsDir, 0755, true);
@@ -218,6 +218,7 @@ class JavaScriptAssetService
     public function getMainJsFilePath()
     {
         $path = resource_path('/js/app.js');
+       
         if (!File::exists($path)) {
             $path = text(
                 label: "Enter the path (relative to resources/) to your main JS file:",
@@ -239,7 +240,7 @@ class JavaScriptAssetService
         }
 
         File::ensureDirectoryExists(resource_path('js'));
-        File::put($path, "// Created by Sheaf UI");
+        File::put($path, "// Created by Sheaf UI \n");
 
         return $path;
     }
