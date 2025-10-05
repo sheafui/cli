@@ -96,7 +96,7 @@ class JavaScriptAssetService
 
         $newContent = $appJsContent . $alpineInitialize;
 
-        File::replace($appJsPath, $newContent);
+        File::put($appJsPath, $newContent);
     }
 
     /**
@@ -210,7 +210,7 @@ class JavaScriptAssetService
             $content = $importStatement . $content;
         }
 
-        File::replace($path, $content);
+        File::put($path, $content);
 
         $this->command->line("  ✓ Added import statement to: {$file}");
     }

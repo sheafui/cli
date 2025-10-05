@@ -142,7 +142,7 @@ class PackageInitializationService
             $content .= "\n\n @custom-variant dark (&:where(.dark, .dark *)); /* By Sheaf.dev */ \n";
         }
 
-        File::replace($path, $content);
+        File::put($path, $content);
     }
 
     public function isComposerPackageInstalled($package)

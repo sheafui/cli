@@ -126,7 +126,7 @@ class ComponentUpdater
     {
         $directory = str($filePath)->beforeLast('/');
         File::ensureDirectoryExists($directory);
-        File::replace($filePath, $fileContent);
+        File::put($filePath, $fileContent);
     }
 
     public function initialize()

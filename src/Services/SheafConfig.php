@@ -22,7 +22,7 @@ class SheafConfig
             'logged_in_at' => now()->toIso8601String(),
         ];
 
-        File::replace("$configFile", json_encode($data));
+        File::put("$configFile", json_encode($data));
     }
 
     public static function saveProjectHash()
@@ -43,7 +43,7 @@ class SheafConfig
         $projectHash = (string) Str::uuid();
         $data['project_hash'] = $projectHash;
 
-        File::replace($configFile, json_encode($data));
+        File::put($configFile, json_encode($data));
 
         return $projectHash;
     }
