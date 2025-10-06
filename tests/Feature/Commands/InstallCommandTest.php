@@ -18,7 +18,7 @@ afterAll(function () {
     }
 });
 
-it("Should be able to install a component without dependencies", function () {
+it("installs a component without dependencies", function () {
     
     $this->artisan("sheaf:install separator")
         ->assertExitCode(0)
@@ -27,7 +27,7 @@ it("Should be able to install a component without dependencies", function () {
     $this->view('components.ui.separator.index');
 });
 
-it("Should be able to install a component with dependencies", function () {
+it("installs a component along with its dependencies when confirmed", function () {
 
     $this->artisan("sheaf:install radio")
         ->expectsQuestion('Install required dependencies?', 'yes')
@@ -38,7 +38,7 @@ it("Should be able to install a component with dependencies", function () {
 });
 
 
-it("Should be able to force install the component files if already exists.", function () {
+it("overwrites existing component files when forced", function () {
 
     $this->artisan("sheaf:install separator")
     ->assertExitCode(0)
@@ -55,7 +55,7 @@ it("Should be able to force install the component files if already exists.", fun
 
 });
 
-it("Should be able to install only the dependencies when choose it.", function () {
+it("installs only dependencies when the component already exists and that option is chosen", function () {
 
     $command = 'sheaf:install separator';
 
