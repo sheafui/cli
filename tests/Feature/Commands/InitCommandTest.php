@@ -25,7 +25,6 @@ afterAll(function () {
 it("Should be able to initialize the package", function () {
 
     Process::fake();
-    $resourcePath = $this->app->resourcePath();
 
     $command = $this->artisan("sheaf:init")
         ->expectsQuestion('Install Phosphor Icons package?', 'no')
