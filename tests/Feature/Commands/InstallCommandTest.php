@@ -72,3 +72,14 @@ it("installs only dependencies when the component already exists and that option
     $this->view("components.ui.separator.index");
 
 });
+
+
+it("simulates component installation with the dry-run option", function () {
+    $this->artisan("sheaf:install alerts --dry-run")
+    ->expectsOutputToContain("Preview: Installing Alerts (Dry Run)")
+    ->expectsOutputToContain("Will create")
+    ->assertExitCode(0)
+    ->run();
+
+    expect(view()->exists("components.ui.alerts.index"))->toBeFalse();
+});
