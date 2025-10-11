@@ -46,7 +46,7 @@ class RemoveComponentCommand extends Command
 
             $this->componentRemover->remove($name);
         }
-
+        $this->info("+ updated sheaf-lock.json file");
         return Command::SUCCESS;
     }
 

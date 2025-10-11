@@ -4,10 +4,17 @@
 namespace Sheaf\Cli\Services;
 
 use Illuminate\Support\Facades\File;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
 
 class ComponentRemover
 {
+    protected $output;
 
+    public function __construct()
+    {
+        $this->output = new ConsoleOutput();
+    }
 
     public function remove($name)
     {
@@ -16,6 +23,7 @@ class ComponentRemover
 
         if (File::isDirectory($componentDirectory)) {
             File::deleteDirectory($componentDirectory);
+            $this->message("+ Deleted directory: $componentDirectory");
         }
 
         $this->cleaningSheafLock($name);
@@ -38,6 +46,7 @@ class ComponentRemover
             if (empty($components)) {
                 File::delete($path);
                 unset($sheafLock['files'][$path]);
+                $this->message("+ Removed File: $path");
             } else {
                 $sheafLock['files'][$path] = $components;
             }
@@ -51,7 +60,8 @@ class ComponentRemover
 
                 $remover->remove($dep);
                 unset($sheafLock['internalDependencies'][$dep]);
-            }else {
+                $this->message("+ Removed internal dependency: $dep (no longer used.)");
+            } else {
                 $sheafLock['internalDependencies'][$dep] = $components;
             }
         }
@@ -62,11 +72,17 @@ class ComponentRemover
             if (empty($components)) {
                 File::delete(resource_path("views/components/ui/$helper.blade.php"));
                 unset($sheafLock['helpers'][$helper]);
-            }else {
+                $this->message("+ Removed helper: $helper (no longer used.)");
+            } else {
                 $sheafLock['helpers'][$helper] = $components;
             }
         }
 
         File::put($sheafLockPath, json_encode($sheafLock, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    }
+
+
+    protected function message(string $message) {
+        $this->output->writeln("<fg=green>$message</fg=green>");
     }
 }
