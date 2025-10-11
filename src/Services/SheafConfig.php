@@ -11,7 +11,7 @@ class SheafConfig
     {
         $configFile = self::configFile();
 
-        if(File::exists($configFile)) {
+        if (File::exists($configFile)) {
             $data = File::get($configFile);
             $data = json_decode($data, true);
         }
@@ -53,7 +53,7 @@ class SheafConfig
         try {
             $configFile = self::configFile();
 
-            if(!File::exists($configFile)) {
+            if (!File::exists($configFile)) {
                 return self::saveProjectHash();
             }
 
@@ -81,7 +81,7 @@ class SheafConfig
         try {
             $configFile = self::configFile();
 
-            if(!File::exists($configFile)) {
+            if (!File::exists($configFile)) {
                 return null;
             }
 
@@ -98,7 +98,7 @@ class SheafConfig
         try {
             $configFile = self::configFile();
 
-            if(!File::exists($configFile)) {
+            if (!File::exists($configFile)) {
                 return null;
             }
 
@@ -130,5 +130,24 @@ class SheafConfig
         }
 
         return $installedComponents;
+    }
+
+    public static function loadSheafLock(): array
+    {
+        $sheafLockPath = base_path('sheaf-lock.json');
+
+        if (!File::exists($sheafLockPath)) {
+            return [];
+        }
+
+        return json_decode(File::get($sheafLockPath), true) ?: [];
+    }
+
+    public static function saveSheafLock(array $sheafLock): void
+    {
+        File::put(
+            base_path('sheaf-lock.json'),
+            json_encode($sheafLock, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
     }
 }

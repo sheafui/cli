@@ -43,7 +43,7 @@ class FullInstallationStrategy extends BaseInstallationStrategy
         $this->initInstallationConfigForFilesInstallation($this->installationConfig);
     }
 
-    private function reportInstallation(array $createdFiles): void
+    protected function reportInstallation(array $createdFiles): void
     {
         $this->reportSuccess();
 
@@ -52,54 +52,59 @@ class FullInstallationStrategy extends BaseInstallationStrategy
         }
     }
 
-    private function updateSheafLock($createdFiles, $dependencies)
+    protected function updateSheafLock($files, $dependencies)
     {
-        $sheafLockPath = base_path("sheaf-lock.json");
+        $sheafLock = SheafConfig::loadSheafLock();
 
-        $sheafLock = [];
 
-        if (File::exists($sheafLockPath)) {
-            $sheafLock = json_decode(File::get($sheafLockPath), true) ?: [];
-        }
+        $this->updateFilesInLock($sheafLock, $files);
+        $this->updateDependenciesInLock($sheafLock, $dependencies);
 
-        
+        SheafConfig::saveSheafLock($sheafLock);
+    }
+
+
+    protected function updateFilesInLock(&$sheafLock, $files)
+    {
         $sheafLock['files'] ??= [];
-        
-        foreach ($createdFiles as $file) {
-            if(str_contains($file['path'], "resources/views/components/ui/{$this->componentName}")) continue;
 
-            $sheafLock['files'][$file['path']] ??= [];
-            if (!in_array($this->componentName, $sheafLock['files'][$file['path']], true)) {
-                $sheafLock['files'][$file['path']][] = $this->componentName;
-            }
+        foreach ($files as $file) {
+            if ($this->shouldSkipFile($file['path'])) continue;
+
+            $this->addComponentToLockEntry($sheafLock['files'], $file['path']);
         }
-        
-        if ($dependencies && array_key_exists('helpers', $dependencies)) {
-            $sheafLock['helpers'] ??= [];
+    }
 
-            foreach ($dependencies['helpers'] as $helper => $value) {
-                $sheafLock['helpers'][$helper] ??= [];
-
-                if (!in_array($this->componentName, $sheafLock['helpers'][$helper], true)) {
-                    $sheafLock['helpers'][$helper][] = $this->componentName;
-                }
-            }
+    protected function updateDependenciesInLock(&$sheafLock, $dependencies)
+    {
+        if (isset($dependencies['helpers'])) {
+            $this->addComponentToLockSection($sheafLock, 'helpers', $dependencies['helpers']);
         }
 
-
-        if ($dependencies && array_key_exists('internal', $dependencies) && $depInternal = Arr::wrap($dependencies['internal'])) {
-            $sheafLock['internalDependencies'] ??= [];
-    
-            foreach ($depInternal as $dep => $value) {
-                $sheafLock['internalDependencies'][$dep] ??= [];
-
-                if (!in_array($this->componentName, $sheafLock['internalDependencies'][$dep], true)) {
-                    $sheafLock['internalDependencies'][$dep][] = $this->componentName;
-                }
-            }
+        if (isset($dependencies['internal'])) {
+            $this->addComponentToLockSection($sheafLock, 'internalDependencies', Arr::wrap($dependencies['internal']));
         }
+    }
 
+    protected function shouldSkipFile($path)
+    {
+        return str_contains($path, "resources/views/components/ui/{$this->componentName}");
+    }
 
-        File::put($sheafLockPath, json_encode($sheafLock, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    protected function addComponentToLockSection(&$sheafLock, $section, $items)
+    {
+        $sheafLock[$section] ??= [];
+
+        foreach ($items as $item => $value) {
+            $this->addComponentToLockEntry($sheafLock[$section], $item);
+        }
+    }
+
+    protected function addComponentToLockEntry(&$lockSection, $key)
+    {
+        $lockSection[$key] ??= [];
+        if (!in_array($this->componentName, $lockSection[$key], true)) {
+            $lockSection[$key][] = $this->componentName;
+        }
     }
 }

@@ -10,6 +10,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 class ComponentRemover
 {
     protected $output;
+    protected $componentName;
 
     public function __construct()
     {
@@ -18,71 +19,112 @@ class ComponentRemover
 
     public function remove($name)
     {
+        $this->componentName = $name;
 
-        $componentDirectory = resource_path("views/components/ui/$name");
+        $this->deleteComponentFiles();
+
+        $this->cleaningSheafLock($name);
+    }
+
+    protected function deleteComponentFiles()
+    {
+        $componentDirectory = resource_path("views/components/ui/{$this->componentName}");
 
         if (File::isDirectory($componentDirectory)) {
             File::deleteDirectory($componentDirectory);
             $this->message("+ Deleted directory: $componentDirectory");
         }
 
-        $this->cleaningSheafLock($name);
+        $componentFile = resource_path("views/components/ui/{$this->componentName}.blade.php");
+
+        if(File::exists($componentFile)) {
+            File::delete($componentFile);
+        }
     }
 
     protected function cleaningSheafLock($name)
     {
-        $sheafLockPath = base_path('sheaf-lock.json');
+        $sheafLock = SheafConfig::loadSheafLock();
 
+        $this->cleaningFiles($sheafLock);
 
-        $sheafLock = [];
+        $this->cleaningDependencies($sheafLock);
 
-        if (File::exists($sheafLockPath)) {
-            $sheafLock = json_decode(File::get($sheafLockPath), true) ?: [];
-        }
+        $this->cleaningHelpers($sheafLock);
 
+        SheafConfig::saveSheafLock($sheafLock);
+    }
+
+    protected function cleaningFiles(&$sheafLock)
+    {
         foreach ($sheafLock['files'] as $path => $components) {
-            $components = array_values(array_filter($components, fn($c) => $c !== $name));
+            $remainingComponents = $this->removeComponentFromList($components);
 
-            if (empty($components)) {
-                File::delete($path);
+            if (empty($remainingComponents)) {
+                $this->deleteFile($path);
                 unset($sheafLock['files'][$path]);
                 $this->message("+ Removed File: $path");
             } else {
-                $sheafLock['files'][$path] = $components;
+                $sheafLock['files'][$path] = $remainingComponents;
             }
         }
+    }
 
+    protected function cleaningDependencies(&$sheafLock)
+    {
         foreach ($sheafLock['internalDependencies'] as $dep => $components) {
-            $components = array_values(array_filter($components, fn($c) => $c !== $name));
+            $remainingComponents = $this->removeComponentFromList($components);
 
-            if (empty($components)) {
+            if (empty($remainingComponents)) {
                 $remover = new self();
 
                 $remover->remove($dep);
                 unset($sheafLock['internalDependencies'][$dep]);
                 $this->message("+ Removed internal dependency: $dep (no longer used.)");
             } else {
-                $sheafLock['internalDependencies'][$dep] = $components;
+                $sheafLock['internalDependencies'][$dep] = $remainingComponents;
             }
         }
+    }
 
+    protected function cleaningHelpers(&$sheafLock)
+    {
         foreach ($sheafLock['helpers'] as $helper => $components) {
-            $components = array_values(array_filter($components, fn($c) => $c !== $name));
+            $remainingComponents = $this->removeComponentFromList($components);
 
-            if (empty($components)) {
-                File::delete(resource_path("views/components/ui/$helper.blade.php"));
+            if (empty($remainingComponents)) {
+                $this->deleteHelperFile($helper);
                 unset($sheafLock['helpers'][$helper]);
                 $this->message("+ Removed helper: $helper (no longer used.)");
             } else {
-                $sheafLock['helpers'][$helper] = $components;
+                $sheafLock['helpers'][$helper] = $remainingComponents;
             }
         }
-
-        File::put($sheafLockPath, json_encode($sheafLock, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
+    protected function removeComponentFromList($components)
+    {
+        return array_values(array_filter($components, fn($c) => $c !== $this->componentName));
+    }
 
-    protected function message(string $message) {
+    protected function deleteFile($path)
+    {
+        if (File::exists($path)) {
+            File::delete($path);
+        }
+    }
+
+    protected function deleteHelperFile($helper)
+    {
+        $path = resource_path("views/components/ui/$helper.blade.php");
+
+        if (File::exists($path)) {
+            File::delete($path);
+        }
+    }
+
+    protected function message(string $message)
+    {
         $this->output->writeln("<fg=green>$message</fg=green>");
     }
 }
