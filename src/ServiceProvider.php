@@ -9,7 +9,8 @@ use Sheaf\Cli\Commands\LoginCommand;
 use Sheaf\Cli\Commands\LogoutCommand;
 use Sheaf\Cli\Commands\WhoAmICommand;
 use Illuminate\Support\ServiceProvider as SupportServiceProvider;
-use Sheaf\Cli\Commands\UpdateCommand;
+use Sheaf\Cli\Commands\RemoveComponentCommand;
+use Sheaf\Cli\Commands\UpdateComponentCommand;
 
 class ServiceProvider extends SupportServiceProvider
 {
@@ -22,7 +23,8 @@ class ServiceProvider extends SupportServiceProvider
             $this->commands([InstallComponentCommand::class]);
             $this->commands([LogoutCommand::class]);
             $this->commands([WhoAmICommand::class]);
-            $this->commands([UpdateCommand::class]);
+            $this->commands([UpdateComponentCommand::class]);
+            $this->commands([RemoveComponentCommand::class]);
         }
 
         $this->publishes(

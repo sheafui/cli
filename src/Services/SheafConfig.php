@@ -118,7 +118,7 @@ class SheafConfig
             'installationTime' => time()
         ];
 
-        File::put(base_path('sheaf.json'), json_encode($installedComponents, true));
+        File::put(base_path('sheaf.json'), json_encode($installedComponents, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     public static function getInstalledComponents()
@@ -126,7 +126,7 @@ class SheafConfig
         $installedComponents = [];
 
         if (File::exists(base_path('sheaf.json'))) {
-            $installedComponents = json_decode(File::get(base_path('sheaf.json')), true);
+            $installedComponents = json_decode(File::get(base_path('sheaf.json')), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         }
 
         return $installedComponents;
