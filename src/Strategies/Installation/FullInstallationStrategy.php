@@ -10,12 +10,14 @@ use Sheaf\Cli\Traits\CanHandleDependenciesInstallation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
+use Sheaf\Cli\Traits\CanUpdateSheafLock;
 
 class FullInstallationStrategy extends BaseInstallationStrategy
 {
 
     use CanHandleDependenciesInstallation;
     use CanHandleFilesInstallation;
+    use CanUpdateSheafLock;
 
     public function execute($componentResources): int
     {
@@ -31,7 +33,7 @@ class FullInstallationStrategy extends BaseInstallationStrategy
 
         $this->installDependencies($componentResources->get('dependencies'));
 
-        $this->updateSheafLock($createdFiles, $componentResources->get('dependencies'));
+        $this->updateSheafLock($createdFiles, $componentResources->get('dependencies'), $this->componentName);
         return Command::SUCCESS;
     }
 
@@ -52,59 +54,5 @@ class FullInstallationStrategy extends BaseInstallationStrategy
         }
     }
 
-    protected function updateSheafLock($files, $dependencies)
-    {
-        $sheafLock = SheafConfig::loadSheafLock();
-
-
-        $this->updateFilesInLock($sheafLock, $files);
-        $this->updateDependenciesInLock($sheafLock, $dependencies);
-
-        SheafConfig::saveSheafLock($sheafLock);
-    }
-
-
-    protected function updateFilesInLock(&$sheafLock, $files)
-    {
-        $sheafLock['files'] ??= [];
-
-        foreach ($files as $file) {
-            if ($this->shouldSkipFile($file['path'])) continue;
-
-            $this->addComponentToLockEntry($sheafLock['files'], $file['path']);
-        }
-    }
-
-    protected function updateDependenciesInLock(&$sheafLock, $dependencies)
-    {
-        if (isset($dependencies['helpers'])) {
-            $this->addComponentToLockSection($sheafLock, 'helpers', $dependencies['helpers']);
-        }
-
-        if (isset($dependencies['internal'])) {
-            $this->addComponentToLockSection($sheafLock, 'internalDependencies', Arr::wrap($dependencies['internal']));
-        }
-    }
-
-    protected function shouldSkipFile($path)
-    {
-        return str_contains($path, "resources/views/components/ui/{$this->componentName}");
-    }
-
-    protected function addComponentToLockSection(&$sheafLock, $section, $items)
-    {
-        $sheafLock[$section] ??= [];
-
-        foreach ($items as $item => $value) {
-            $this->addComponentToLockEntry($sheafLock[$section], $item);
-        }
-    }
-
-    protected function addComponentToLockEntry(&$lockSection, $key)
-    {
-        $lockSection[$key] ??= [];
-        if (!in_array($this->componentName, $lockSection[$key], true)) {
-            $lockSection[$key][] = $this->componentName;
-        }
-    }
+    
 }

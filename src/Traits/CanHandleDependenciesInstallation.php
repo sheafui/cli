@@ -163,20 +163,20 @@ trait CanHandleDependenciesInstallation
 
     public function shouldInstallDependency($dependency, $info)
     {
-        $installedComponents = SheafConfig::getInstalledComponents();
+        $sheafFile = SheafConfig::getSheafFile();
 
         if(!File::exists(resource_path("views/components/ui/$dependency"))) {
             return true;
         }
 
-        if (!$installedComponents) {
+        if (!$sheafFile) {
             return true;
         }
 
-        if (!array_key_exists($dependency, $installedComponents['components'])) {
+        if (!array_key_exists($dependency, $sheafFile['components'])) {
             return true;
         }
 
-        return $installedComponents['components'][$dependency]['installationTime'] < $info['lastModified'];
+        return $sheafFile['components'][$dependency]['installationTime'] < $info['lastModified'];
     }
 }

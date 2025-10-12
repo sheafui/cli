@@ -8,6 +8,7 @@ use Sheaf\Cli\Traits\CanHandleFilesInstallation;
 use Sheaf\Cli\Services\SheafConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Sheaf\Cli\Traits\CanUpdateSheafLock;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
@@ -15,6 +16,7 @@ use function Laravel\Prompts\select;
 class SkipDependenciesStrategy extends BaseInstallationStrategy
 {
     use CanHandleFilesInstallation;
+    use CanUpdateSheafLock;
 
     public function execute($componentResources): int
     {
@@ -29,6 +31,7 @@ class SkipDependenciesStrategy extends BaseInstallationStrategy
         $createdFiles = $this->installFiles($componentResources->get('files'));
 
         SheafConfig::saveInstalledComponent($this->componentName);
+        $this->updateSheafLock($createdFiles, null, $this->componentName);
 
         $this->reportInstallation($createdFiles);
         

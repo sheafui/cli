@@ -37,7 +37,7 @@ class ComponentRemover
 
         $componentFile = resource_path("views/components/ui/{$this->componentName}.blade.php");
 
-        if(File::exists($componentFile)) {
+        if (File::exists($componentFile)) {
             File::delete($componentFile);
         }
     }
@@ -51,6 +51,8 @@ class ComponentRemover
         $this->cleaningDependencies($sheafLock);
 
         $this->cleaningHelpers($sheafLock);
+
+        $this->updateSheafFile();
 
         SheafConfig::saveSheafLock($sheafLock);
     }
@@ -100,6 +102,15 @@ class ComponentRemover
                 $sheafLock['helpers'][$helper] = $remainingComponents;
             }
         }
+    }
+
+    protected function updateSheafFile()
+    {
+        $sheafFile = SheafConfig::getSheafFile();
+
+        unset($sheafFile['components'][$this->componentName]);
+
+        SheafConfig::saveSheafFile($sheafFile);
     }
 
     protected function removeComponentFromList($components)

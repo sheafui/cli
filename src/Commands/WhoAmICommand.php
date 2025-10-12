@@ -28,7 +28,7 @@ class WhoAmICommand extends Command
      */
     public function handle()
     {
-        $currentUser = SheafConfig::getConfigFile();
+        $currentUser = SheafConfig::getCurrentUser();
 
         if(!$currentUser) {
             $this->components->warn("You're not log in. please login first with your sheaf account.");

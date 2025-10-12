@@ -9,7 +9,7 @@ class SheafConfig
 {
     public static function saveLoggedInUserCredentials(string $email, string $token)
     {
-        $configFile = self::configFile();
+        $configFile = self::configFilePath();
 
         if (File::exists($configFile)) {
             $data = File::get($configFile);
@@ -27,7 +27,7 @@ class SheafConfig
 
     public static function saveProjectHash()
     {
-        $configFile = self::configFile();
+        $configFile = self::configFilePath();
 
         $data = [];
 
@@ -51,7 +51,7 @@ class SheafConfig
     public static function getProjectHash()
     {
         try {
-            $configFile = self::configFile();
+            $configFile = self::configFilePath();
 
             if (!File::exists($configFile)) {
                 return self::saveProjectHash();
@@ -71,7 +71,7 @@ class SheafConfig
         }
     }
 
-    public static function configFile()
+    public static function configFilePath()
     {
         return base_path('sheaf.json');
     }
@@ -79,7 +79,7 @@ class SheafConfig
     public static function getUserToken()
     {
         try {
-            $configFile = self::configFile();
+            $configFile = self::configFilePath();
 
             if (!File::exists($configFile)) {
                 return null;
@@ -93,10 +93,10 @@ class SheafConfig
         }
     }
 
-    public static function getConfigFile()
+    public static function getCurrentUser()
     {
         try {
-            $configFile = self::configFile();
+            $configFile = self::configFilePath();
 
             if (!File::exists($configFile)) {
                 return null;
@@ -112,24 +112,28 @@ class SheafConfig
 
     public static function saveInstalledComponent(string $componentName)
     {
-        $installedComponents = self::getInstalledComponents();
+        $sheafFile = self::getSheafFile();
 
-        $installedComponents['components'][$componentName] = [
+        $sheafFile['components'][$componentName] = [
             'installationTime' => time()
         ];
 
-        File::put(base_path('sheaf.json'), json_encode($installedComponents, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        self::saveSheafFile($sheafFile);
     }
 
-    public static function getInstalledComponents()
-    {
-        $installedComponents = [];
+    public static function saveSheafFile($sheafFile) {
+        File::put(self::configFilePath(), json_encode($sheafFile, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    }
 
-        if (File::exists(base_path('sheaf.json'))) {
-            $installedComponents = json_decode(File::get(base_path('sheaf.json')), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    public static function getSheafFile()
+    {
+        $sheafFile = [];
+
+        if (File::exists(self::configFilePath())) {
+            $sheafFile = json_decode(File::get(self::configFilePath()), true);
         }
 
-        return $installedComponents;
+        return $sheafFile;
     }
 
     public static function loadSheafLock(): array

@@ -108,17 +108,17 @@ class ComponentUpdater
 
     public function needsUpdate($lastModified)
     {
-        $installedComponents = SheafConfig::getInstalledComponents();
+        $sheafFile = SheafConfig::getSheafFile();
 
-        if (!$installedComponents) {
+        if (!$sheafFile) {
             return true;
         }
 
-        if (!array_key_exists($this->component, $installedComponents['components'])) {
+        if (!array_key_exists($this->component, $sheafFile['components'])) {
             return true;
         }
 
-        return $installedComponents['components'][$this->component]['installationTime'] < $lastModified;
+        return $sheafFile['components'][$this->component]['installationTime'] < $lastModified;
     }
 
 
