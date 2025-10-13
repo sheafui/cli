@@ -5,9 +5,6 @@ namespace Sheaf\Cli\Services;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Illuminate\Console\Concerns\InteractsWithIO;
-use Laravel\Prompts\Output\ConsoleOutput;
-use Symfony\Component\Console\Input\StringInput;
 
 class ComponentRemover
 {
@@ -93,7 +90,7 @@ class ComponentRemover
             $remainingComponents = $this->removeComponentFromList($components);
 
             if (empty($remainingComponents)) {
-                $remover = new self();
+                $remover = new self($this->command);
 
                 $remover->remove($dep);
                 unset($sheafLock['internalDependencies'][$dep]);
