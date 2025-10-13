@@ -86,6 +86,10 @@ class ComponentRemover
 
     protected function cleaningDependencies(&$sheafLock)
     {
+        if(!isset($sheafLock['internalDependencies'])) {
+            return;
+        }
+
         foreach ($sheafLock['internalDependencies'] as $dep => $components) {
             $remainingComponents = $this->removeComponentFromList($components);
 
@@ -103,6 +107,10 @@ class ComponentRemover
 
     protected function cleaningHelpers(&$sheafLock)
     {
+        if(!isset($sheafLock['helpers'])) {
+            return;
+        }
+
         foreach ($sheafLock['helpers'] as $helper => $components) {
             $remainingComponents = $this->removeComponentFromList($components);
 
