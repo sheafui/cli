@@ -5,7 +5,7 @@ namespace Sheaf\Cli\Commands;
 use Illuminate\Console\Command;
 use Sheaf\Cli\Services\ComponentUpdater;
 
-class UpdateCommand extends Command
+class UpdateComponentCommand extends Command
 {
     /**
      * The name and signature of the console command.

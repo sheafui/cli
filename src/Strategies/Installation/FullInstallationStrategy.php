@@ -8,12 +8,16 @@ use Sheaf\Cli\Traits\CanHandleFilesInstallation;
 use Sheaf\Cli\Services\SheafConfig;
 use Sheaf\Cli\Traits\CanHandleDependenciesInstallation;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
+use Sheaf\Cli\Traits\CanUpdateSheafLock;
 
 class FullInstallationStrategy extends BaseInstallationStrategy
 {
 
     use CanHandleDependenciesInstallation;
     use CanHandleFilesInstallation;
+    use CanUpdateSheafLock;
 
     public function execute($componentResources): int
     {
@@ -24,10 +28,12 @@ class FullInstallationStrategy extends BaseInstallationStrategy
 
         $this->reportInstallation($createdFiles);
 
+
         $this->runInitialization();
 
         $this->installDependencies($componentResources->get('dependencies'));
 
+        $this->updateSheafLock($createdFiles, $componentResources->get('dependencies'), $this->componentName);
         return Command::SUCCESS;
     }
 
@@ -39,7 +45,7 @@ class FullInstallationStrategy extends BaseInstallationStrategy
         $this->initInstallationConfigForFilesInstallation($this->installationConfig);
     }
 
-    private function reportInstallation(array $createdFiles): void
+    protected function reportInstallation(array $createdFiles): void
     {
         $this->reportSuccess();
 
@@ -48,4 +54,5 @@ class FullInstallationStrategy extends BaseInstallationStrategy
         }
     }
 
+    
 }

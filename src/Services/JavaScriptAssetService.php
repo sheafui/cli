@@ -124,6 +124,7 @@ class JavaScriptAssetService
     protected function createUtilsFile(): bool
     {
         $path = resource_path("js/utils.js");
+        $this->updateSheafLock("resources/js/utils.js", "dark-theme");
 
         if (File::exists($path) && !$this->forceOverwrite) {
             $this->command->warn("File already exists: utils.js");
@@ -301,4 +302,26 @@ class JavaScriptAssetService
 
         return version_compare($version, 'v3.0.0', '>=');
     }
+
+    protected function updateSheafLock($path, $name) {
+
+        $sheafLockPath = base_path('sheaf-lock.json');
+
+        $sheafLock = [];
+
+        if(File::exists($sheafLockPath)) {
+            $sheafLock = json_decode(File::get($sheafLockPath), true) ?: [];
+        }
+
+        $sheafLock['files'] ??= [];
+        $sheafLock['files'][$path] ??= [];
+        
+        if(!in_array($name, $sheafLock['files'][$path], true)) {
+            $sheafLock['files'][$path][] = $name;
+        }
+
+        File::put($sheafLockPath, json_encode($sheafLock, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+    }
+
 }

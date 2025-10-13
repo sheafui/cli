@@ -16,6 +16,25 @@ class ComponentHttpClient
         $this->baseUrl = config('sheaf.cli.server_url');
         $this->token = SheafConfig::getUserToken();
     }
+
+    public function fetchComponentFilesPath(string $name) {
+        $url = "{$this->baseUrl}/api/cli/components/$name/files";
+
+        $response = Http::asJson()->get($url);
+
+        if ($response->failed()) {
+            $component = Str::of($name)->headline();
+            $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
+
+            throw new Exception("Failed to install the component '$component'. \n $message");
+        }
+
+        return [
+            'success' => true,
+            'data' => $response->collect()
+        ];
+
+    }
     public function fetchResources(string $componentName)
     {
 

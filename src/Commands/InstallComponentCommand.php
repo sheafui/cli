@@ -58,6 +58,7 @@ class InstallComponentCommand extends Command
             $result = (new ComponentInstaller($this, $this->components, $installationConfig))->install($name);
 
             if ($result === Command::SUCCESS) {
+                $this->info(" ✓ Updated sheaf.json and sheaf-lock.json");
                 $this->components->info("Full documentation: https://sheafui.dev/docs/components/{$name}");
             }
         }
@@ -90,6 +91,7 @@ class InstallComponentCommand extends Command
     public function getBannerTitle(string $title)
     {
         $formattedTitle = Str::of($title)->headline();
+
 
         return match (true) {
             $this->option('only-deps') => "Installing {$formattedTitle} Dependencies Only",
