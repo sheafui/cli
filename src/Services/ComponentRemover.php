@@ -3,27 +3,39 @@
 
 namespace Sheaf\Cli\Services;
 
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Symfony\Component\Console\Output\ConsoleOutput;
-
 
 class ComponentRemover
 {
     protected $output;
     protected $componentName;
 
-    public function __construct()
+    public function __construct(protected $command)
     {
-        $this->output = new ConsoleOutput();
     }
 
     public function remove($name)
     {
         $this->componentName = $name;
 
+        $isExists = $this->checkComponentExistence();
+
+        if(!$isExists) {
+            $this->message("Component is not installed in this project.");
+            return Command::FAILURE;
+        }
+
         $this->deleteComponentFiles();
 
         $this->cleaningSheafLock($name);
+    }
+
+    protected function checkComponentExistence()
+    {
+
+        return File::exists(resource_path("views/components/ui/{$this->componentName}")) ||
+            File::exists(resource_path("views/components/ui/{$this->componentName}.blade.php"));
     }
 
     protected function deleteComponentFiles()
@@ -32,7 +44,7 @@ class ComponentRemover
 
         if (File::isDirectory($componentDirectory)) {
             File::deleteDirectory($componentDirectory);
-            $this->message("+ Deleted directory: $componentDirectory");
+            $this->message("+ Deleted directory: resources/views/components/ui/{$this->componentName}");
         }
 
         $componentFile = resource_path("views/components/ui/{$this->componentName}.blade.php");
@@ -74,11 +86,15 @@ class ComponentRemover
 
     protected function cleaningDependencies(&$sheafLock)
     {
+        if(!isset($sheafLock['internalDependencies'])) {
+            return;
+        }
+
         foreach ($sheafLock['internalDependencies'] as $dep => $components) {
             $remainingComponents = $this->removeComponentFromList($components);
 
             if (empty($remainingComponents)) {
-                $remover = new self();
+                $remover = new self($this->command);
 
                 $remover->remove($dep);
                 unset($sheafLock['internalDependencies'][$dep]);
@@ -91,6 +107,10 @@ class ComponentRemover
 
     protected function cleaningHelpers(&$sheafLock)
     {
+        if(!isset($sheafLock['helpers'])) {
+            return;
+        }
+
         foreach ($sheafLock['helpers'] as $helper => $components) {
             $remainingComponents = $this->removeComponentFromList($components);
 
@@ -136,6 +156,6 @@ class ComponentRemover
 
     protected function message(string $message)
     {
-        $this->output->writeln("<fg=green>$message</fg=green>");
+        $this->command->info("<fg=green>$message</fg=green>");
     }
 }

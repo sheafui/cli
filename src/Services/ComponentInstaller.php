@@ -126,6 +126,6 @@ class ComponentInstaller
 
     public function confirmDestructiveAction()
     {
-        return confirm("All the component files will be overwritten, you might lose your modifications. are you sure you want to processed?");
+        return confirm("All the component files will be overwritten, you might lose your modifications. are you sure you want to proceed?");
     }
 }
