@@ -49,47 +49,40 @@ it("quits successfully when attempting to remove a non-installed component", fun
 });
 
 
-// it("removes an installed component with dependencies", function () {
+it("removes an installed component with dependencies", function () {
 
-//     $component = 'select';
-//     $dependency = 'icon';
-//     $helper = 'popup';
-//     $baseDirectory = resource_path("views/components/ui/");
+    $component = 'select';
+    $dependency = 'icon';
+    $helper = 'popup';
+    $baseDirectory = resource_path("views/components/ui/");
 
-//     //* using force option to ensure the command runs
-//     $this->artisan("sheaf:install $component --force  --internal-deps")
-//         ->assertExitCode(0)
-//         ->run();
+    //* using force option to ensure the command runs
+    $this->artisan("sheaf:install $component --force  --internal-deps")
+        ->assertExitCode(0)
+        ->run();
 
-//     expect(File::isDirectory("$baseDirectory/$component"))->toBeTrue();
-//     expect(File::isDirectory("$baseDirectory/$dependency"))->toBeTrue();
-//     expect(File::exists("$baseDirectory/$helper.blade.php"))->toBeTrue();
+    expect(File::isDirectory("$baseDirectory/$component"))->toBeTrue();
+    expect(File::isDirectory("$baseDirectory/$dependency"))->toBeTrue();
+    expect(File::exists("$baseDirectory/$helper.blade.php"))->toBeTrue();
 
-//     expect(view()->exists("components.ui.$component.index"))->toBeTrue();
-//     expect(view()->exists("components.ui.$dependency.index"))->toBeTrue();
-//     expect(view()->exists("components.ui.$helper"))->toBeTrue();
-
-
-//     $output = new BufferedConsoleOutput();
-//     Artisan::call("sheaf:remove $component", [], $output);
-//     $sheafLock = File::get(base_path("sheaf-lock.json"));
-//     dd($output->fetch(), $sheafLock);
+    expect(view()->exists("components.ui.$component.index"))->toBeTrue();
+    expect(view()->exists("components.ui.$dependency.index"))->toBeTrue();
+    expect(view()->exists("components.ui.$helper"))->toBeTrue();
 
 
-//     $this->artisan("sheaf:remove $component")
-//         ->assertExitCode(0)
-//         ->expectsOutputToContain("Deleted directory: resources/views/components/ui/$component")
-//         ->expectsOutputToContain("Deleted directory: resources/views/components/ui/$dependency")
-//         ->expectsOutputToContain("Removed internal dependency: $dependency (no longer used.)")
-//         ->expectsOutputToContain("Removed helper: $helper (no longer used.)")
-//         ->run();
-//     // Deleted directory: resources/views/components/ui/icon
+    $this->artisan("sheaf:remove $component")
+        ->assertExitCode(0)
+        ->expectsOutputToContain("Deleted directory: resources/views/components/ui/$component")
+        ->expectsOutputToContain("Deleted directory: resources/views/components/ui/$dependency")
+        ->expectsOutputToContain("Removed internal dependency: $dependency (no longer used.)")
+        ->expectsOutputToContain("Removed helper: $helper (no longer used.)")
+        ->run();
 
-//     expect(File::isDirectory("$baseDirectory/$component"))->toBeFalse();
-//     expect(File::isDirectory("$baseDirectory/$dependency"))->toBeFalse();
+    expect(File::isDirectory("$baseDirectory/$component"))->toBeFalse();
+    expect(File::isDirectory("$baseDirectory/$dependency"))->toBeFalse();
 
-//     $sheafLock = File::get(base_path("sheaf-lock.json"));
+    $sheafLock = File::get(base_path("sheaf-lock.json"));
 
-//     expect($sheafLock)->not->toContain("$component");
-//     expect($sheafLock)->not->toContain("$dependency");
-// })->only();
+    expect($sheafLock)->not->toContain("$component");
+    expect($sheafLock)->not->toContain("$dependency");
+});
