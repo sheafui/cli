@@ -2,11 +2,8 @@
 
 namespace Sheaf\Cli\Commands;
 
-use Sheaf\Cli\Services\ComponentInstaller;
-use Sheaf\Cli\Support\InstallationConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Sheaf\Cli\Services\ComponentRemover;
 
 use function Laravel\Prompts\text;
@@ -14,9 +11,6 @@ use function Laravel\Prompts\text;
 class RemoveComponentCommand extends Command
 {
 
-    public function __construct(protected ComponentRemover $componentRemover) {
-        parent::__construct();
-    }
     /**
      * The name and signature of the console command.
      *
@@ -39,14 +33,20 @@ class RemoveComponentCommand extends Command
     {
 
         $componentNames = $this->getComponentName();
+        $success = Command::SUCCESS;
+
+        $componentRemover = new ComponentRemover($this);
 
         foreach ($componentNames as $name) {
 
             $this->banner("Removing all $name files");
 
-            $this->componentRemover->remove($name);
+            $success = $componentRemover->remove($name);
         }
-        $this->info("+ updated sheaf-lock.json and sheaf.json files");
+
+        if($success === Command::SUCCESS) {
+            $this->info("+ updated sheaf-lock.json and sheaf.json files");
+        }
         return Command::SUCCESS;
     }
 
