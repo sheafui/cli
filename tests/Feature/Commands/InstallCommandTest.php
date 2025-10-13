@@ -32,7 +32,7 @@ it("overwrites existing component files when forced", function () {
 
     $this->artisan("sheaf:install separator")
         ->expectsQuestion("Component 'Separator' already exists. What would you like to do?", "overwrite")
-        ->expectsQuestion("All the component files will be overwritten, you might lose your modifications. are you sure you want to processed?", "yes")
+        ->expectsQuestion("All the component files will be overwritten, you might lose your modifications. are you sure you want to proceed?", "yes")
         ->expectsOutputToContain("All component files will be overwritten.")
         ->assertExitCode(0)
         ->run();
