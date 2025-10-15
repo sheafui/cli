@@ -6,36 +6,23 @@ namespace Sheaf\Cli\Services;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
+use function Laravel\Prompts\confirm;
+
 class ComponentRemover
 {
     protected $output;
     protected $componentName;
 
-    public function __construct(protected $command)
-    {
-    }
+    public function __construct(protected $command) {}
 
     public function remove($name)
     {
         $this->componentName = $name;
 
-        $isExists = $this->checkComponentExistence();
-
-        if(!$isExists) {
-            $this->message("Component is not installed in this project.");
-            return Command::FAILURE;
-        }
 
         $this->deleteComponentFiles();
 
         $this->cleaningSheafLock($name);
-    }
-
-    protected function checkComponentExistence()
-    {
-
-        return File::exists(resource_path("views/components/ui/{$this->componentName}")) ||
-            File::exists(resource_path("views/components/ui/{$this->componentName}.blade.php"));
     }
 
     protected function deleteComponentFiles()
@@ -54,7 +41,7 @@ class ComponentRemover
         }
     }
 
-    protected function cleaningSheafLock($name)
+    protected function cleaningSheafLock()
     {
         $sheafLock = SheafConfig::loadSheafLock();
 
@@ -86,28 +73,39 @@ class ComponentRemover
 
     protected function cleaningDependencies(&$sheafLock)
     {
-        if(!isset($sheafLock['internalDependencies'])) {
+        if (!isset($sheafLock['internalDependencies'])) {
             return;
         }
 
         foreach ($sheafLock['internalDependencies'] as $dep => $components) {
+
+            if(!in_array($this->componentName, $components, true)) {
+                continue;
+            }
             $remainingComponents = $this->removeComponentFromList($components);
 
-            if (empty($remainingComponents)) {
-                $remover = new self($this->command);
-
-                $remover->remove($dep);
-                unset($sheafLock['internalDependencies'][$dep]);
-                $this->message("+ Removed internal dependency: $dep (no longer used.)");
-            } else {
-                $sheafLock['internalDependencies'][$dep] = $remainingComponents;
+            $sheafLock['internalDependencies'][$dep] = $remainingComponents;
+            
+            if (!empty($remainingComponents)) {
+                continue;
             }
+
+            $confirm = confirm(label: "$dep is no longer used as a dependency, would you like to remove it?", default: false, hint: "If you use $dep somewhere else in your project, select no.");
+
+            if (!$confirm) {
+                continue;
+            }
+            
+            $remover = new self($this->command);
+            $remover->remove($dep);
+            $this->message("+ Removed internal dependency: $dep (no longer used.)");
+            unset($sheafLock['internalDependencies'][$dep]);
         }
     }
 
     protected function cleaningHelpers(&$sheafLock)
     {
-        if(!isset($sheafLock['helpers'])) {
+        if (!isset($sheafLock['helpers'])) {
             return;
         }
 

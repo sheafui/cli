@@ -4,6 +4,7 @@ namespace Sheaf\Cli\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Sheaf\Cli\Services\ComponentRemover;
 
 use function Laravel\Prompts\text;
@@ -33,18 +34,25 @@ class RemoveComponentCommand extends Command
     {
 
         $componentNames = $this->getComponentName();
-        $success = Command::SUCCESS;
+        $sheafFileEdited = false;
 
         $componentRemover = new ComponentRemover($this);
 
         foreach ($componentNames as $name) {
 
+            $isExists = $this->checkComponentExistence($name);
+
+            if (!$isExists) {
+                $this->info("Component is not installed in this project.");
+                continue;
+            }
             $this->banner("Removing all $name files");
 
-            $success = $componentRemover->remove($name);
+            $componentRemover->remove($name);
+            $sheafFileEdited = true;
         }
 
-        if($success === Command::SUCCESS) {
+        if ($sheafFileEdited) {
             $this->info("+ updated sheaf-lock.json and sheaf.json files");
         }
         return Command::SUCCESS;
@@ -72,5 +80,12 @@ class RemoveComponentCommand extends Command
         $this->line("  {$title}");
         $this->line(str_repeat("═", $length));
         $this->newLine();
+    }
+
+    protected function checkComponentExistence(string $name)
+    {
+
+        return File::exists(resource_path("views/components/ui/$name")) ||
+            File::exists(resource_path("views/components/ui/$name.blade.php"));
     }
 }
