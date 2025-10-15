@@ -47,7 +47,7 @@ it("quits successfully when attempting to remove a non-installed component", fun
 });
 
 
-it("removes an installed component with dependencies after confirmation of removing dependencies", function () {
+it("Removes an installed component along with its dependencies when removal is confirmed.", function () {
 
     $component = 'autocomplete';
     $dependency = 'icon';
@@ -85,7 +85,7 @@ it("removes an installed component with dependencies after confirmation of remov
     expect($sheafLock)->not->toContain("$dependency");
 });
 
-it("removes an installed component without dependencies after not confirming to remove dependencies", function () {
+it("Removes an installed component but keeps its unused dependencies when removal is not confirmed.", function () {
 
     $component = 'autocomplete';
     $dependency = 'icon';
