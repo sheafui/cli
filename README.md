@@ -109,4 +109,4 @@ Visit [sheafui.dev](https://sheafui.dev) for:
 
 ## License
 
-Sheaf CLI is open-source software. Premium components require a valid license.
+Sheaf CLI is open-source software.
