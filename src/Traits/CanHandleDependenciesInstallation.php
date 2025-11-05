@@ -155,9 +155,10 @@ trait CanHandleDependenciesInstallation
         }
 
         $this->command->info(" ↳ Installing $name External Dependencies");
-        foreach ($deps as $key => $dep) {
-            $this->command->info(" <fg=white>Installing</fg=white> <bg=green, fg=white>$key</bg=green,>...");
-            Process::run($dep[1]);
+        foreach ($deps as $dep) {
+            $name = key($dep);
+            $this->command->info(" <fg=white>Installing</fg=white> <bg=green>$name</bg=green>...");
+            Process::run($dep[$name]);
         }
     }
 
