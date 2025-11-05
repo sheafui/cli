@@ -47,7 +47,7 @@ it("quits successfully when attempting to remove a non-installed component", fun
 });
 
 
-it("Removes an installed component along with its dependencies when removal is confirmed.", function () {
+it("Removes an installed component along with its dependencies when removal is confirmed. update test descriptions for component removal scenarios", function () {
 
     $component = 'autocomplete';
     $dependency = 'icon';
