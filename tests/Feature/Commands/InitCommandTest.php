@@ -39,6 +39,8 @@ it("Should be able to initialize the package", function () {
         $command->expectsQuestion("The $mainJsFile is not exists, do you want to create it?", true);
     }
 
+    $command->expectsQuestion("Get notified when we release new components", null);
+
     $command->assertExitCode(0);
 
     $command->run();
