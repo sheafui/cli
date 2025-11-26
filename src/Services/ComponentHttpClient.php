@@ -17,7 +17,8 @@ class ComponentHttpClient
         $this->token = SheafConfig::getUserToken();
     }
 
-    public function fetchComponentFilesPath(string $name) {
+    public function fetchComponentFilesPath(string $name)
+    {
         $url = "{$this->baseUrl}/api/cli/components/$name/files";
 
         $response = Http::asJson()->get($url);
@@ -33,7 +34,6 @@ class ComponentHttpClient
             'success' => true,
             'data' => $response->collect()
         ];
-
     }
     public function fetchResources(string $componentName)
     {
@@ -59,4 +59,18 @@ class ComponentHttpClient
         ];
     }
 
+    public function subscribeUserToNewsletter(string $email)
+    {
+        try {
+            $url = "{$this->baseUrl}/api/cli/newsletter/subscribe?email={$email}";
+
+            $result = Http::asJson()->get($url);
+
+            if (!$result['success']) {
+                throw new Exception("Failed to subscribe to the news letter");
+            }
+        } catch (\Throwable $th) {
+            throw new Exception("Failed to subscribe to the news letter");
+        }
+    }
 }

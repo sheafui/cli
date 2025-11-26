@@ -5,6 +5,7 @@ namespace Sheaf\Cli\Commands;
 use Sheaf\Cli\Services\PackageInitializationService;
 use Sheaf\Cli\Support\InitializationConfig;
 use Illuminate\Console\Command;
+use Sheaf\Cli\Services\ComponentHttpClient;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\text;
@@ -64,6 +65,7 @@ class SheafInitCommand extends Command
         if ($result) {
             $this->displaySuccess($configuration);
             $this->displayNextStep($configuration);
+            $this->subscribeToNewsletter();
             return Command::SUCCESS;
         }
 
@@ -206,6 +208,31 @@ class SheafInitCommand extends Command
         return null;
     }
 
+    /**
+     * Ask user to subscribe to the news letter
+     */
+    protected function subscribeToNewsletter()
+    {
+
+        $email = text(
+            label: 'Get notified when we release new components',
+            placeholder: 'your.email@example.com',
+            hint: 'No spam, just useful updates',
+            validate: fn($input) => $input && !filter_var($input, FILTER_VALIDATE_EMAIL)
+                ? 'Please enter a valid email address'
+                : null
+        );
+
+        if (empty($email)) {
+            return;
+        }
+        try {
+            new ComponentHttpClient()->subscribeUserToNewsletter($email);
+            $this->info("✓ Thanks for subscribing! We'll keep you updated with new components and features.");
+        } catch (\Throwable $th) {
+            $this->warn("We couldn't subscribe your email right now, but you can always subscribe later at https://sheafui.dev");
+        }
+    }
 
     /**
      * Display the Sheaf package banner
