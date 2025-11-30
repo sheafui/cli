@@ -227,10 +227,11 @@ class SheafInitCommand extends Command
             return;
         }
         try {
-            new ComponentHttpClient()->subscribeUserToNewsletter($email);
-            $this->info("✓ Thanks for subscribing! We'll keep you updated with new components and features.");
+            $httpClient = new ComponentHttpClient();
+            $httpClient->subscribeUserToNewsletter($email);
+            $this->info("Thanks for subscribing! We will keep you updated with new components and features.");
         } catch (\Throwable $th) {
-            $this->warn("We couldn't subscribe your email right now, but you can always subscribe later at https://sheafui.dev");
+            $this->warn("We could not subscribe your email right now, but you can always subscribe later at https://sheafui.dev");
         }
     }
 
