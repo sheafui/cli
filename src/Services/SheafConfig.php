@@ -16,7 +16,7 @@ class SheafConfig
             $data = json_decode($data, true);
         }
 
-        $data['user'] =  [
+        $data['user'] = [
             'email' => $email,
             'token' => $token,
             'logged_in_at' => now()->toIso8601String(),
@@ -53,7 +53,7 @@ class SheafConfig
         try {
             $configFile = self::configFilePath();
 
-            if (!File::exists($configFile)) {
+            if (! File::exists($configFile)) {
                 return self::saveProjectHash();
             }
 
@@ -61,13 +61,13 @@ class SheafConfig
 
             $projectHash = json_decode($data)['project_hash'];
 
-            if (!$projectHash) {
+            if (! $projectHash) {
                 $projectHash = self::saveProjectHash();
             }
 
             return $projectHash;
         } catch (\Throwable $th) {
-            return self::saveProjectHash();;
+            return self::saveProjectHash();
         }
     }
 
@@ -81,13 +81,13 @@ class SheafConfig
         try {
             $configFile = self::configFilePath();
 
-            if (!File::exists($configFile)) {
+            if (! file_exists($configFile)) {
                 return null;
             }
 
-            $userData = File::get("$configFile");
+            $data = json_decode(file_get_contents($configFile));
 
-            return json_decode($userData)['user']['token'];
+            return optional($data)->user?->token;
         } catch (\Throwable $th) {
             return null;
         }
@@ -98,7 +98,7 @@ class SheafConfig
         try {
             $configFile = self::configFilePath();
 
-            if (!File::exists($configFile)) {
+            if (! File::exists($configFile)) {
                 return null;
             }
 
@@ -115,13 +115,14 @@ class SheafConfig
         $sheafFile = self::getSheafFile();
 
         $sheafFile['components'][$componentName] = [
-            'installationTime' => time()
+            'installationTime' => time(),
         ];
 
         self::saveSheafFile($sheafFile);
     }
 
-    public static function saveSheafFile($sheafFile) {
+    public static function saveSheafFile($sheafFile)
+    {
         File::put(self::configFilePath(), json_encode($sheafFile, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
@@ -140,7 +141,7 @@ class SheafConfig
     {
         $sheafLockPath = base_path('sheaf-lock.json');
 
-        if (!File::exists($sheafLockPath)) {
+        if (! File::exists($sheafLockPath)) {
             return [];
         }
 

@@ -2,9 +2,8 @@
 
 namespace Sheaf\Cli\Commands;
 
-use Sheaf\Cli\Services\SheafConfig;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
+use Sheaf\Cli\Services\SheafConfig;
 
 class LogoutCommand extends Command
 {
@@ -27,12 +26,26 @@ class LogoutCommand extends Command
      */
     public function handle()
     {
+        $configFile = SheafConfig::configFilePath();
 
-        $configDirectory = SheafConfig::configDirectory();
-        $configFile = "$configDirectory/config.json";
-        if (File::exists($configFile)) {
-            File::delete($configFile);
-            $this->components->info("You have logged out.");
+        if (! file_exists($configFile)) {
+            $this->components->warn('You are not logged in.');
+
+            return;
         }
+
+        $config = json_decode(file_get_contents($configFile));
+
+        if (empty($config->user)) {
+            $this->components->warn('You are not logged in.');
+
+            return;
+        }
+
+        unset($config->user);
+
+        file_put_contents($configFile, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        $this->components->info('You have logged out.');
     }
 }

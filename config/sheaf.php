@@ -2,8 +2,7 @@
 
 return [
     'cli' => [
-        'server_url' =>
-        'https://sheafui.dev'
+        'server_url' => 'http://127.0.0.1:8000',
     ],
-    'env' => 'production'
+    'env' => 'production',
 ];

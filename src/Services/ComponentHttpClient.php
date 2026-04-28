@@ -9,7 +9,8 @@ use Illuminate\Support\Str;
 class ComponentHttpClient
 {
     protected string $baseUrl;
-    protected string|null $token;
+
+    protected ?string $token;
 
     public function __construct()
     {
@@ -25,16 +26,17 @@ class ComponentHttpClient
 
         if ($response->failed()) {
             $component = Str::of($name)->headline();
-            $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
+            $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : '';
 
             throw new Exception("Failed to install the component '$component'. \n $message");
         }
 
         return [
             'success' => true,
-            'data' => $response->collect()
+            'data' => $response->collect(),
         ];
     }
+
     public function fetchResources(string $componentName)
     {
 
@@ -42,20 +44,20 @@ class ComponentHttpClient
 
         $url = "{$this->baseUrl}/api/cli/components/$componentName?project_hash=$projectHash";
 
-        $response =  Http::asJson()
-            ->when($this->token, fn($http) => $http->withToken($this->token))
+        $response = Http::asJson()
+            ->when(filled($this->token), fn ($http) => $http->withToken($this->token))
             ->get($url);
 
         if ($response->failed()) {
             $component = Str::of($componentName)->headline();
-            $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : "";
+            $message = array_key_exists('message', $response->json() ?? []) ? $response->json()['message'] : '';
 
             throw new Exception("Failed to install the component '$component'. \n $message");
         }
 
         return [
             'success' => true,
-            'data' => $response->collect()
+            'data' => $response->collect(),
         ];
     }
 
@@ -66,11 +68,11 @@ class ComponentHttpClient
 
             $result = Http::asJson()->get($url);
 
-            if (!$result['success']) {
-                throw new Exception("Failed to subscribe to the news letter");
+            if (! $result['success']) {
+                throw new Exception('Failed to subscribe to the news letter');
             }
         } catch (\Throwable $th) {
-            throw new Exception("Failed to subscribe to the news letter");
+            throw new Exception('Failed to subscribe to the news letter');
         }
     }
 }
